@@ -1150,7 +1150,7 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 </ul>
 
 <pre><code class="r">
-<span class="identifier">anim.contour</span><span class="paren">(</span><span class="identifier">z</span><span class="operator">=</span><span class="identifier">cplot</span>, <span class="identifier">times</span><span class="operator">=</span><span class="number">1</span><span class="operator">:</span><span class="number">20</span>, <span class="identifier">levels</span><span class="operator">=</span><span class="number">80</span> <span class="operator">+</span> <span class="number">1</span><span class="operator">:</span><span class="number">12</span><span class="operator">*</span><span class="number">10</span>, <span class="identifier">lty</span><span class="operator">=</span><span class="identifier">c</span><span class="paren">(</span><span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span><span class="paren">)</span><span class="paren">)</span>
+anim.contour(z=cplot, times=1:20, levels=80 + 1:12*10, lty=c(1,2,2))
 </code></pre>
 
 <div class="scianimator">
@@ -1183,8 +1183,7 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 <section data-transition="linear" data-transition-speed="default">
 <h3>3D animation</h3>
 <div class="slideContent" >
-<pre><code class="r">anim.persp(z=cplot2, times=1:20, xlab=&quot;&quot;, ylab=&quot;&quot;, zlab=&quot;Height&quot;, phi=45,
-theta=30, speed=5, border=NA, r=3, col=&quot;yellowgreen&quot;, shade=.5, box=FALSE)
+<pre><code class="r">anim.persp(z=cplot2, times=1:20, xlab=&quot;&quot;, ylab=&quot;&quot;, zlab=&quot;Height&quot;, phi=45, theta=30, speed=5, border=NA, r=3, col=&quot;yellowgreen&quot;, shade=.5, box=FALSE)
 </code></pre>
 
 <div class="scianimator">
