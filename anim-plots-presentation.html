@@ -773,7 +773,7 @@ hljs.initHighlightingOnLoad();
    
   
 
-<link rel="stylesheet" href="http://vis.supstat.com/assets/themes/dinky/css/scianimator.css"><script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script><script src="http://vis.supstat.com/assets/themes/dinky/js/jquery.scianimator.min.js"></script>
+<link rel="stylesheet" href="http://vis.supstat.com/assets/themes/dinky/css/scianimator.css"><script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script><script src="http://vis.supstat.com/assets/themes/dinky/js/jquery.scianimator.min.js"></script><style type="text/css">.reveal code.r {   font-size: 1em}</style>
 
 
 
@@ -808,7 +808,7 @@ hljs.initHighlightingOnLoad();
 <h3>Simple example</h3>
 <div class="slideContent" >
 <pre><code class="r">library(anim.plots)
-ap &lt;- anim.plot(1:5, 1:5, col=&quot;green&quot;)
+anim.plot(1:5, 1:5, col=&quot;green&quot;)
 </code></pre>
 
 <div class="scianimator">
@@ -844,7 +844,7 @@ ap &lt;- anim.plot(1:5, 1:5, col=&quot;green&quot;)
 <pre><code class="r">x &lt;- rep(1:100/10, 20) 
 times &lt;- rep(1:20, each=100) # twenty frames with 100 points each
 y &lt;- sin(x*times/4)
-waves &lt;- anim.plot(x,y,times, type=&quot;l&quot;, col=&quot;orange&quot;, lwd=2)
+anim.plot(x,y,times, type=&quot;l&quot;, col=&quot;orange&quot;, lwd=2)
 </code></pre>
 
 <div class="scianimator">
@@ -1192,7 +1192,7 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 <script type="text/javascript">
   (function($) {
     $(document).ready(function() {
-      var imgs = Array(136);
+      var imgs = Array(155);
       for (i=0; ; i++) {
         if (i == imgs.length) break;
         imgs[i] = "anim-plots-presentation-figure/unnamed-chunk-13-" + (i + 1) + ".png";
