@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+qq <- function(x) as.character(quote(x))
 
 <head>
   <meta charset="utf-8">
@@ -1148,7 +1149,8 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 <li>Using a dataset I made earlier</li>
 </ul>
 
-<pre><code class="r">cplot &lt;- aperm(cplot, c(2,3,1))
+<pre><code class="r">
+<span class="identifier">anim.contour</span><span class="paren">(</span><span class="identifier">z</span><span class="operator">=</span><span class="identifier">cplot</span>, <span class="identifier">times</span><span class="operator">=</span><span class="number">1</span><span class="operator">:</span><span class="number">20</span>, <span class="identifier">levels</span><span class="operator">=</span><span class="number">80</span> <span class="operator">+</span> <span class="number">1</span><span class="operator">:</span><span class="number">12</span><span class="operator">*</span><span class="number">10</span>, <span class="identifier">lty</span><span class="operator">=</span><span class="identifier">c</span><span class="paren">(</span><span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span><span class="paren">)</span><span class="paren">)</span>
 </code></pre>
 
 <div class="scianimator">
