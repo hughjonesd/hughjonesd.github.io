@@ -927,8 +927,6 @@ anim.plot(x,y,times, type=&quot;l&quot;, col=&quot;orange&quot;, lwd=2)
 <section data-transition="linear" data-transition-speed="default">
 <h3>Example - zooming in</h3>
 <div class="slideContent" >
-<p><small></p>
-
 <pre><code class="r"> x &lt;- rnorm(4000); y&lt;- rnorm(4000)
  x &lt;- rep(x, 40); y &lt;- rep(y, 40)
  xlims &lt;- 4*2^(-(1:40/10))
@@ -960,14 +958,16 @@ anim.plot(x,y,times, type=&quot;l&quot;, col=&quot;orange&quot;, lwd=2)
   })(jQuery);
 </script>
 
-<p></small></p>
-
 </div>
 
 </section>
 <section data-transition="linear" data-transition-speed="default">
-<h3>`window` again</h3>
+<h3>Moving window again</h3>
 <div class="slideContent" >
+<ul>
+<li>Use <code>window</code> again:</li>
+</ul>
+
 <pre><code class="r">## discoveries 1860-1959
 xlim &lt;- rbind(1860:1959,1870:1969)
 anim.plot(1860:1959, discoveries, times=1:100, xlim=xlim, col=&quot;red&quot;,
@@ -1006,7 +1006,6 @@ anim.plot(1860:1959, discoveries, times=1:100, xlim=xlim, col=&quot;red&quot;,
 <div class="slideContent" >
 <pre><code class="r">data(ChickWeight)
 ChickWeight$chn &lt;- as.numeric(as.factor(ChickWeight$Chick))
-
 tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet), 
      pch=as.numeric(Diet))
 </code></pre>
@@ -1146,10 +1145,11 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 <h3>Contour plot</h3>
 <div class="slideContent" >
 <ul>
-<li>One I made earlier</li>
-<li><code>cplot</code> comes from manipulating the <code>volcano</code> dataset
-<small></li>
+<li>Using a dataset I made earlier</li>
 </ul>
+
+<pre><code class="r">cplot &lt;- aperm(cplot, c(2,3,1))
+</code></pre>
 
 <div class="scianimator">
 <div id="unnamed_chunk_12" style="display: inline-block;">
@@ -1175,7 +1175,39 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
   })(jQuery);
 </script>
 
-<p></small></p>
+</div>
+
+</section>
+<section data-transition="linear" data-transition-speed="default">
+<h3>3D animation</h3>
+<div class="slideContent" >
+<pre><code class="r">anim.persp(z=cplot2, times=1:20, xlab=&quot;&quot;, ylab=&quot;&quot;, zlab=&quot;Height&quot;, phi=45,
+theta=30, speed=5, border=NA, r=3, col=&quot;yellowgreen&quot;, shade=.5, box=FALSE)
+</code></pre>
+
+<div class="scianimator">
+<div id="unnamed_chunk_14" style="display: inline-block;">
+</div>
+
+<p></div></p>
+
+<script type="text/javascript">
+  (function($) {
+    $(document).ready(function() {
+      var imgs = Array(20);
+      for (i=0; ; i++) {
+        if (i == imgs.length) break;
+        imgs[i] = "anim-plots-presentation-figure/unnamed-chunk-14-" + (i + 1) + ".png";
+      }
+      $("#unnamed_chunk_14").scianimator({
+          "images": imgs,
+          "delay": 250,
+          "controls": ["first", "previous", "play", "next", "last", "loop", "speed"],
+      });
+      $("#unnamed_chunk_14").scianimator("play");
+    });
+  })(jQuery);
+</script>
 
 </div>
 
@@ -1184,7 +1216,7 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 <h3>Earthquakes last week</h3>
 <div class="slideContent" >
 <div class="scianimator">
-<div id="unnamed_chunk_13" style="display: inline-block;">
+<div id="unnamed_chunk_15" style="display: inline-block;">
 </div>
 
 <p></div></p>
@@ -1192,17 +1224,17 @@ tmp &lt;- anim.plot(weight ~ chn + Time, data=ChickWeight, col=as.numeric(Diet),
 <script type="text/javascript">
   (function($) {
     $(document).ready(function() {
-      var imgs = Array(155);
+      var imgs = Array(156);
       for (i=0; ; i++) {
         if (i == imgs.length) break;
-        imgs[i] = "anim-plots-presentation-figure/unnamed-chunk-13-" + (i + 1) + ".png";
+        imgs[i] = "anim-plots-presentation-figure/unnamed-chunk-15-" + (i + 1) + ".png";
       }
-      $("#unnamed_chunk_13").scianimator({
+      $("#unnamed_chunk_15").scianimator({
           "images": imgs,
           "delay": 250,
           "controls": ["first", "previous", "play", "next", "last", "loop", "speed"],
       });
-      $("#unnamed_chunk_13").scianimator("play");
+      $("#unnamed_chunk_15").scianimator("play");
     });
   })(jQuery);
 </script>
