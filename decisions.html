@@ -30,13 +30,13 @@ var counterB = 0;
     } else {
       msg = "Click again to try again."
     }
-    res.innerHTML = "You got GBP " + amount + ". " + msg;
+    res.innerHTML = "You got " + amount + " GBP. " + msg;
   }
   
   function randomizeA() {
     done = maybeDisableIt();
     if (! done) counterA = counterA + 1;
-    setResult(3, done);
+    setResult(30, done);
   }
   
   function randomizeB() {
@@ -45,7 +45,7 @@ var counterB = 0;
     if (! done) counterB = counterB + 1;
     var res;
     if (Math.random() < 0.8) {
-      res = 4;
+      res = 40;
     } else {
       res = 0;
     }
