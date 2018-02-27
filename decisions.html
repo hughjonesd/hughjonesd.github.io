@@ -1,0 +1,68 @@
+<html>
+
+<head>
+<title>Pick a button</title>
+</head>
+
+<script type="text/javascript">
+
+  function maybeDisableIt() {
+    var cb = document.getElementById("mycheckbox");
+    var ba = document.getElementById("buttonA");
+    var bb = document.getElementById("buttonB");
+    if (cb.checked) {
+      ba.disabled = true;
+      bb.disabled = true;
+      return true;
+    }
+    return false;
+  }
+  
+  function setResult(amount, done) {
+    var res = document.getElementById("result");
+    var msg;
+    if (done) {
+      msg = "This was your final result.";
+    } else {
+      msg = "Click again to try again."
+    }
+    res.innerHTML = "You got GBP " + amount + ". " + msg;
+  }
+  
+  function randomizeA() {
+    done = maybeDisableIt();
+    setResult(3, done);
+  }
+  
+  function randomizeB() {
+    done = maybeDisableIt();
+    var res;
+    if (Math.random() < 0.8) {
+      res = 4;
+    } else {
+      res = 0;
+    }
+    setResult(res, done)
+  }
+</script>
+<body>
+
+<p></p>
+<p></p>
+<p>
+Please choose one of the two options. You can try each option as many times as you want.
+When you are ready to make your final choice, tick the checkbox.
+</p>
+<form id="myform">
+  <input type="button" onclick="randomizeA()" id="buttonA" value="Option A">
+  <input type="button" onclick="randomizeB()" id="buttonB" value="Option B">
+<input type="checkbox" value="Final choice" id="mycheckbox">This is my final choice!
+</form>
+
+<p></p>
+<div id="result">
+  
+</div>
+
+</body>
+</html>
