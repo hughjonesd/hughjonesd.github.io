@@ -21,15 +21,17 @@ var counterB = 0;
     return false;
   }
   
-  function setResult(amount, done) {
+  function setResult(amount, done, button) {
     var res = document.getElementById("result");
     var msg;
     if (done) {
       msg = "You got " + amount + " GBP. ";
       msg = msg + "This was your final result. You tried button A " + counterA + " times and ";
-      msg = msg + "button B " + counterB + " times. Thanks for playing!";
+      msg = msg + "button B " + counterB + " times.";
+      msg = msg + "In the end you chose button " + button + ". Thanks for playing!";
     } else {
-      msg = "You would have got " + amount + " GBP. ";
+      msg = "You tried button " + button + ".";
+      msg = msg + "You would have got " + amount + " GBP. ";
       msg = msg + "Click again to try again."
     }
     res.innerHTML = msg;
@@ -38,7 +40,7 @@ var counterB = 0;
   function randomizeA() {
     done = maybeDisableIt();
     if (! done) counterA = counterA + 1;
-    setResult(30, done);
+    setResult(30, done, "A");
   }
   
   function randomizeB() {
@@ -51,7 +53,7 @@ var counterB = 0;
     } else {
       res = 0;
     }
-    setResult(res, done)
+    setResult(res, done, "B")
   }
 </script>
 <body>
