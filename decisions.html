@@ -6,6 +6,9 @@
 
 <script type="text/javascript">
 
+var counterA = 0;
+var counterB = 0;
+
   function maybeDisableIt() {
     var cb = document.getElementById("mycheckbox");
     var ba = document.getElementById("buttonA");
@@ -22,7 +25,8 @@
     var res = document.getElementById("result");
     var msg;
     if (done) {
-      msg = "This was your final result.";
+      msg = "This was your final result. You tried button A " + counterA + "times and ";
+      msg = msg + "button B " + counterB + " times. Thanks for playing!";
     } else {
       msg = "Click again to try again."
     }
@@ -31,11 +35,14 @@
   
   function randomizeA() {
     done = maybeDisableIt();
+    if (! done) counterA = counterA + 1;
     setResult(3, done);
   }
   
   function randomizeB() {
+
     done = maybeDisableIt();
+    if (! done) counterB = counterB + 1;
     var res;
     if (Math.random() < 0.8) {
       res = 4;
@@ -51,7 +58,9 @@
 <p></p>
 <p>
 Please choose one of the two options. You can try each option as many times as you want.
-When you are ready to make your final choice, tick the checkbox.
+</p>
+<p>
+When you are ready to make your final choice, tick the checkbox. NB: you can only do this once!
 </p>
 <form id="myform">
   <input type="button" onclick="randomizeA()" id="buttonA" value="Option A">
