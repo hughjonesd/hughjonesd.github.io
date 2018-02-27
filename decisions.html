@@ -25,12 +25,14 @@ var counterB = 0;
     var res = document.getElementById("result");
     var msg;
     if (done) {
-      msg = "This was your final result. You tried button A " + counterA + " times and ";
+      msg = "You got " + amount + " GBP. ";
+      msg = msg + "This was your final result. You tried button A " + counterA + " times and ";
       msg = msg + "button B " + counterB + " times. Thanks for playing!";
     } else {
-      msg = "Click again to try again."
+      msg = "You would have got " + amount + " GBP. ";
+      msg = msg + "Click again to try again."
     }
-    res.innerHTML = "You got " + amount + " GBP. " + msg;
+    res.innerHTML = msg;
   }
   
   function randomizeA() {
