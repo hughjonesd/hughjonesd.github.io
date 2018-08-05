@@ -741,4 +741,5 @@ bold(index_ht)[1, ] <- TRUE
 index_ht
 ```
 
-That's all! Or at least, it's all I know. Good luck, and don't behead yourself.
+That's all! Or at least, it's all I know. Maybe in 15 years, I'll discover some more tricks.
+Meanwhile, good luck, and don't behead yourself.
