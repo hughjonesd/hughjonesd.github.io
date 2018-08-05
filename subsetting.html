@@ -499,6 +499,17 @@ nrow(food_to_buy)</code></pre>
 <pre><code>[1] 3</code></pre>
 <p>You will forget this. And then, you will regret it.</p>
 </div>
+<div id="oh-no-owl-bears" class="section level2">
+<h2>OH NO! OWL BEARS!</h2>
+<p>There’s another gotcha with <code>$</code> subsetting. I’ll just feed my pet owl:</p>
+<pre class="r gotcha"><code>cat(&quot;My pet owl says to-whit&quot;, pets$owl)</code></pre>
+<pre><code>My pet owl says to-whit TO-WRAAAARGH!</code></pre>
+<p>Oh… that wasn’t an owl! Unfortunately, my owl escaped from the list, and I tried to feed an owlbear:</p>
+<pre class="r"><code>str(pets)</code></pre>
+<pre><code>List of 1
+ $ owlbear: chr &quot;TO-WRAAAARGH!&quot;</code></pre>
+<p>In other words, <code>$</code> matches using substrings, if it can’t find an exact match. So you may not always get what you expect.</p>
+</div>
 <div id="minus-numbers" class="section level2">
 <h2>Minus numbers</h2>
 <p>Just as you use positive integers to <em>select</em> elements, you can use negative numbers in indices to <em>remove</em> elements.</p>

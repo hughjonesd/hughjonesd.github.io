@@ -419,6 +419,27 @@ nrow(food_to_buy)
 
 You will forget this. And then, you will regret it.
 
+## OH NO! OWL BEARS!
+
+There's another gotcha with `$` subsetting. I'll just feed my pet owl:
+
+```{r, include = FALSE}
+pets <- list(owlbear = "TO-WRAAAARGH!")
+```
+
+```{r, opts.label = "gotcha"}
+cat("My pet owl says to-whit", pets$owl)
+```
+
+Oh... that wasn't an owl! Unfortunately, my owl escaped from the list, and I tried to feed an 
+owlbear:
+
+```{r}
+str(pets)
+```
+
+In other words, `$` matches using substrings, if it can't find an exact
+match. So you may not always get what you expect.
 
 ## Minus numbers
 
