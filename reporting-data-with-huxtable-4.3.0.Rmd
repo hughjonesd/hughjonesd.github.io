@@ -1,5 +1,5 @@
 ---
-title: "Highlighting data with huxtable 4.3.0"
+title: "Reporting data with huxtable 4.3.0"
 output: rmdformats::material
 ---
 
@@ -7,7 +7,7 @@ output: rmdformats::material
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Big tables of data
+# Dealing with masses of data
 
 Sometimes there is a lot of data to present. For example, you might have a big
 table of regressions, or sales figures from several business units. You want  
