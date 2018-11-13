@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Dealing with masses of data
 
 Sometimes there is a lot of data to present. For example, you might have a big
-table of regressions, or sales figures from several business units. You want  
-to show the data, while highlighting certain key elements.
+table of regressions, or sales figures from several business units. You want to show 
+the data, while highlighting certain key elements.
 
 As an example, we'll use the `mtcars` dataset of 32 1970s automobiles.
 
