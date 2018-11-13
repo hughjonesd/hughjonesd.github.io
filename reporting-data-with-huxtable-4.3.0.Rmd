@@ -64,7 +64,7 @@ car_hux %>% top()
 ```
 
 
-# How `map_` commands work
+# Mapping data with `map_` commands
 
 `map_` commands take a huxtable, an optional row and column specifier, and a "mapping function" which states how to map table data to output. Mapping functions start with
 `by_`. For example, `by_rows` just says: apply this output to rows in sequence.
@@ -87,7 +87,22 @@ the row and column specifier arguments to a `map_` command. The row specifier
 was `everywhere`, which is just huxtable shorthand for `1:nrow(car_hux)`. The
 column specifier was the column name.
 
-# Highlight text data with `by_regex`
+# Map numbers in a range with `by_colorspace`
+
+To map a continuous range of numbers, use `by_colorspace`. This takes
+a vector of colours, then maps the data continuously between them. Here,
+we'll highlight the "qsec" column, which reports the car's time to reach a quarter of a
+mile. Lower is better (if you're an adrenalin junkie), so let's make low numbers
+pop out with a yellow background:
+
+```{r}
+
+car_hux %>% map_background_color(everywhere, "qsec",
+      by_colorspace("yellow", "red"))
+
+```
+
+# Highlight text with `by_regex`
 
 `map_text_color` is another `map_` command. There is one of these commands for every
 huxtable cell property. Another one is `map_bold`. Let's use this to pick out
@@ -107,7 +122,7 @@ is a regular expression. You can read more about them in `?regexpr`. Here, we ju
 used a simple regular expression, which matched every cell containing the string 
 `"Merc"`. 
 
-# Highlighting a column with `set_background_color` and `set_outer_borders`
+# Highlight a column with `set_background_color` and `set_outer_borders`
 
 Sometimes you might want to highlight an entire column of data, for example as 
 you flip through a report. Here's one way to do this:
