@@ -1,0 +1,196 @@
+---
+title: "Tweaking R colours with the `shades` package"
+author: "David Hugh-Jones"
+output: 
+  hrbrthemes::ipsum:
+    toc: false
+---
+```{r include=FALSE}
+knitr::opts_chunk$set(fig.retina=2)
+```
+
+
+```{r ipsum_setup, message=FALSE, warning=FALSE, cache=FALSE, echo=FALSE}
+library(hrbrthemes)
+library(tidyverse)
+
+update_geom_font_defaults(font_rc)
+```
+
+
+# Colours in R
+
+R has famously good looking graphics, and it also has a large collection of
+beautiful colour palettes. Notable examples include [RColorBrewer](https://cran.r-project.org/package=RColorBrewer) and
+[viridis](https://cran.r-project.org/package=viridis), both now available in [ggplot2](https://ggplot2.tidyverse.org). 
+[This list of palettes](https://github.com/EmilHvitfeldt/r-color-palettes) is
+a great place to find something that suits you.
+
+Still, sometimes you want to experiment with your own colours. For example,
+I recently wrote a paper using five colours to represent different types of
+decision, from "egalitarian" to "meritocratic". I used a blue-yellow-red colour
+scheme to represent the different decisions, since in the UK, that maps
+on to the political space, with deep red being the most "left wing" and 
+dark blue the most "right wing".
+
+```{r, fig.show = 'hold'}
+dfr <- tibble(height = seq(0.2, 1, .2), factor = letters[1:5])
+
+fair_cols <- c("#38170B","#BF1B0B", "#FFC465", "#66ADE5", "#252A52")
+names(fair_cols) <- letters[1:5]
+
+g <- ggplot(dfr, aes(y = height, fill = factor, x = 1)) + 
+      geom_col() +
+      theme_ipsum_rc(grid="XY") 
+
+g + scale_fill_manual(values = fair_cols) + 
+      labs(main = "ggplot with manual colours")
+
+barplot(dfr$height, col = fair_cols, names.arg = letters[1:5], main = "Base graphics with manual colours")
+```
+
+I like to obsess about graphs -- it is a nice break from the very intellectual
+work of writing an academic paper. So, I might want to tweak those colours, maybe
+making them brighter or darker.
+
+I could just change the colours in `fair_cols`. But if you are like me, those
+strings of hexadecimal may not mean much. It would be hard to tell that 
+`#38170B` is deep red, for example. And it is quite difficult to edit colours
+manually. You have to guess how to change the red, green and blue constituents
+of the colour, then translate that into hexadecimal numbers. All I want to do 
+is make my palette a bit brighter, lighter or darker!
+
+Enter Jon Clayden's excellent [`shades` library](https://cran.r-project.org/web/packages/shades/index.html).
+
+```{r}
+library(shades)
+```
+
+`shades` contains functions to edit colours in natural ways:
+
+```{r}
+
+g + scale_fill_manual(values = brightness(fair_cols, 0.9)) + 
+      labs(title = "Changing brightness")
+
+barplot(dfr$height, col = brightness(fair_cols, 0.9), names.arg = letters[1:5],
+      main = "Changing brightness")
+```
+
+`shades` has a full set of colour manipulations, including `saturation`, 
+`hue`, `lightness` and `opacity` (which is similar to `scales::alpha`).
+
+
+```{r}
+
+g + scale_fill_manual(values = saturation(fair_cols, 0.3)) + 
+      labs(title = "Dull colours")
+
+```
+
+
+You don't have to set absolute values. Using the `delta` function, you 
+can change by an absolute amount. Or using the `scalefac` function, you can
+scale by a percentage of the current level:
+
+
+```{r}
+
+g + scale_fill_manual(values = saturation(fair_cols, delta(-0.2))) + 
+      labs(title = "Saturation down by 0.2")
+
+g + scale_fill_manual(values = saturation(fair_cols, scalefac(0.6))) + 
+      labs(title = "Saturation down 40%")
+
+```
+
+This is nice and intuitive. But I'm still not happy. I may not always have a 
+fixed set of colours to play with. For example, suppose I had some
+quantitative data and I wanted to display it using a continuous scale. In
+base R, I could use the `scales::colour_ramp` function. In `ggplot`, I could use 
+e.g.
+`scale_colour_gradient`. 
+
+```{r}
+dfr2 <- tibble(x = runif(50), y = runif(50))
+
+fair_ramp <- scales::colour_ramp(fair_cols)
+
+
+g2 <- ggplot(dfr2, aes(x, y, colour = y)) + 
+      geom_point() + 
+      theme_ipsum_rc()
+g2 + 
+      scale_colour_gradientn(colours = fair_cols) +
+      labs(title = "ggplot: continuous colours")
+
+plot(y ~ x, dfr2, col = fair_ramp(dfr2$y), pch = 19, main = "Base graphics: continuous colours")
+```
+
+# Manipulating colour functions
+
+That's great, but now it's hard for me to tweak those colours. I could redefine
+the input to `fair_ramp` or `scale_colour_gradientn`, but I may not want to
+lose the original colours. Or I may be  experimenting on the command line, and my
+palette or ramp was defined far back in my history.
+
+Luckily, the latest release of `shades` works on both colour vectors, and
+on whole functions. If you apply e.g. `saturation` to a function, you get
+a new function back, that will apply `saturation` to its outputs. Let's see
+an example:
+
+```{r}
+desaturated <- saturation(fair_ramp, scalefac(0.5))
+
+plot(y ~ x, dfr2, col = desaturated(dfr2$y), pch = 19, main = "A desaturated colour ramp")
+```
+
+You can apply this even if you don't know the original colours at all - letting
+you manipulate whole palettes at once:
+
+```{r}
+
+desat_heat <- saturation(heat.colors, scalefac(0.5))
+
+plot(1:7, 1:7, col = desat_heat(7), pch = 19, cex = 4, 
+      main = "Desaturated heat.colors")
+
+```
+
+# Working with ggplot scales
+
+`shades` works with `ggplot` scales. So, you can tweak the output of 
+e.g. `viridis` or `brewer` scales on the fly:
+
+```{r}
+
+g2 + 
+      lightness(scale_color_distiller(), scalefac(0.70)) +
+      labs(title = "Brewer, but 30% darker")
+
+```
+
+# Mixing colours
+
+Lastly, as well as changing lightness, hue, saturation and friends, you can mix
+colours using the `addmix` and `submix` functions. 
+
+```{r}
+yellower_cols <- addmix(fair_cols, "yellow", 0.2)
+
+barplot(dfr$height, col = yellower_cols, names.arg = letters[1:5],
+      main = "A touch more yellow")
+```
+
+And these also work with functions and scales:
+
+```{r}
+g2 + 
+      submix(scale_colour_distiller(), "red", 0.6) +
+      labs(title = "Distiller with red = sloe gin")
+```
+
+# To sum up
+
+[The `shades` package](https://cran.r-project.org/web/packages/shades/index.html) lets you tweak colours and palettes on the fly, enabling easy
+experimentation. Of course, the results depend on your artistic skills!
