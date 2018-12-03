@@ -2,7 +2,7 @@
 title: "Tweaking R colours with the `shades` package"
 author: "David Hugh-Jones"
 output: 
-  hrbrthemes::ipsum:
+  html_document:
     toc: false
 ---
 ```{r include=FALSE}
@@ -27,7 +27,7 @@ beautiful colour palettes. Notable examples include [RColorBrewer](https://cran.
 a great place to find something that suits you.
 
 Still, sometimes you want to experiment with your own colours. For example,
-I recently wrote a paper using five colours to represent different types of
+in a recent paper, I used five colours to represent different types of
 decision, from "egalitarian" to "meritocratic". I used a blue-yellow-red colour
 scheme to represent the different decisions, since in the UK, that maps
 on to the political space, with deep red being the most "left wing" and 
