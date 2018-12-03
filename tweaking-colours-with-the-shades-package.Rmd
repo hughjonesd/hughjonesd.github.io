@@ -44,7 +44,7 @@ g <- ggplot(dfr, aes(y = height, fill = factor, x = 1)) +
       theme_ipsum_rc(grid="XY") 
 
 g + scale_fill_manual(values = fair_cols) + 
-      labs(main = "ggplot with manual colours")
+      labs(title = "ggplot with manual colours")
 
 barplot(dfr$height, col = fair_cols, names.arg = letters[1:5], main = "Base graphics with manual colours")
 ```
