@@ -1,0 +1,139 @@
+---
+title: "Sir Mixalot"
+author: "David Hugh-Jones"
+format: revealjs
+editor: visual
+echo: true
+error: true
+---
+
+# This is lame
+
+```{r}
+letters[length(letters)]   # so unreadable
+
+```
+
+\
+
+```{r}
+letters[(length(letters) - 3):(length(letters))]   # even worse
+
+```
+
+\
+
+```{r}
+letters[length(letters) - 3:0]   # what am I a maths nerd
+```
+
+# Tail
+
+```{r}
+tail(letters, 4)   # ok
+
+```
+
+\
+
+```{r}
+tail(letters, 2:4)  # boring
+```
+
+\
+
+```{r}
+tail(letters, 1) <- "Z"   # boooring
+```
+
+# Flip it and reverse it
+
+```{r}
+rev(letters)[1:3]                     # ok...
+```
+
+\
+
+```{r}
+rev(letters)[1:3] <- c("Z", "Y", "X") # why can't we have nice things :-(
+```
+
+# 
+
+### Why don't people do this, are they stupid
+
+```{r}
+back <- function (x, ix) {
+  stopifnot(is.numeric(ix), all(ix > 0))
+  endpoint <- length(x) + 1
+  endpoint <- length(x) + 1
+  x[endpoint - ix]
+}
+
+
+`back<-` <- function (x, ix, value) {
+  stopifnot(is.numeric(ix), all(ix > 0))
+  endpoint <- length(x) + 1
+  x[endpoint - ix] <- value
+  x
+}
+
+```
+
+# So obvious
+
+```{r}
+back(letters, 4)
+```
+
+\
+
+```{r}
+back(letters, 1:4) # as it should be
+```
+
+\
+
+```{r}
+back(letters, 2:4) # not a problem
+```
+
+\
+
+```{r}
+back(letters, 4:1) # just count from the back
+```
+
+# As God intended
+
+```{r}
+back(letters, 4) <- "W"
+back(letters, 2:3) <- c("Y", "X")
+
+cat(back(letters, 10:1)) 
+```
+
+# Backwardation
+
+```{r}
+back(letters, 0)  # don't get too clever
+
+```
+
+\
+
+```{r}
+back(letters, -1) # you'll only confuse yourself
+```
+
+# 
+
+#### Conclusion:
+
+#### Get `back`  to where you once belonged
+
+[Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa)
+
+No I will not be producing a CRAN package
+
+![](images/4252.jpg.webp)
