@@ -478,19 +478,23 @@ David Hugh-Jones
 </section>
 <h3 id="why-dont-people-do-this-are-they-stupid">Why don’t people do this, are they stupid</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>back <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix) {</span>
-<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(ix <span class="sc">&gt;</span> <span class="dv">0</span>), <span class="fu">all</span>(ix <span class="sc">&lt;=</span> <span class="fu">length</span>(x)))</span>
-<span id="cb17-3"><a href="#cb17-3"></a>  endpoint <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb17-4"><a href="#cb17-4"></a>  x[endpoint <span class="sc">-</span> ix]</span>
-<span id="cb17-5"><a href="#cb17-5"></a>}</span>
-<span id="cb17-6"><a href="#cb17-6"></a></span>
-<span id="cb17-7"><a href="#cb17-7"></a></span>
-<span id="cb17-8"><a href="#cb17-8"></a><span class="st">`</span><span class="at">back&lt;-</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix, value) {</span>
-<span id="cb17-9"><a href="#cb17-9"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(ix <span class="sc">&gt;</span> <span class="dv">0</span>), <span class="fu">all</span>(ix <span class="sc">&lt;=</span> <span class="fu">length</span>(x)))</span>
-<span id="cb17-10"><a href="#cb17-10"></a>  endpoint <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb17-11"><a href="#cb17-11"></a>  x[endpoint <span class="sc">-</span> ix] <span class="ot">&lt;-</span> value</span>
-<span id="cb17-12"><a href="#cb17-12"></a>  x</span>
-<span id="cb17-13"><a href="#cb17-13"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>.back_ix <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix) {</span>
+<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(<span class="fu">abs</span>(ix) <span class="sc">&lt;=</span> <span class="fu">length</span>(x)))</span>
+<span id="cb17-3"><a href="#cb17-3"></a>  ix <span class="ot">&lt;-</span> ix[ix <span class="sc">!=</span> <span class="dv">0</span>]</span>
+<span id="cb17-4"><a href="#cb17-4"></a>  neg <span class="ot">&lt;-</span> ix <span class="sc">&lt;</span> <span class="dv">0</span></span>
+<span id="cb17-5"><a href="#cb17-5"></a>  ix <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">abs</span>(ix)</span>
+<span id="cb17-6"><a href="#cb17-6"></a>  ix[neg] <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">1</span> <span class="sc">*</span> ix[neg]</span>
+<span id="cb17-7"><a href="#cb17-7"></a>  ix</span>
+<span id="cb17-8"><a href="#cb17-8"></a>}</span>
+<span id="cb17-9"><a href="#cb17-9"></a></span>
+<span id="cb17-10"><a href="#cb17-10"></a>back <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix) {</span>
+<span id="cb17-11"><a href="#cb17-11"></a>  x[<span class="fu">.back_ix</span>(x, ix)]</span>
+<span id="cb17-12"><a href="#cb17-12"></a>}</span>
+<span id="cb17-13"><a href="#cb17-13"></a></span>
+<span id="cb17-14"><a href="#cb17-14"></a><span class="st">`</span><span class="at">back&lt;-</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix, value) {</span>
+<span id="cb17-15"><a href="#cb17-15"></a>  x[<span class="fu">.back_ix</span>(x, ix)] <span class="ot">&lt;-</span> value</span>
+<span id="cb17-16"><a href="#cb17-16"></a>  x</span>
+<span id="cb17-17"><a href="#cb17-17"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></section>
 <section id="so-obvious" class="title-slide slide level1 center">
 <h1>So obvious</h1>
@@ -542,25 +546,37 @@ David Hugh-Jones
 <section id="backwardation" class="title-slide slide level1 center">
 <h1>Backwardation</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="fu">back</span>(letters, <span class="dv">0</span>)  <span class="co"># don't get too clever</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-error">
-<pre><code>Error in back(letters, 0): all(ix &gt; 0) is not TRUE</code></pre>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a>letters[<span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">21</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "v" "W" "X" "Y" "z"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="fu">back</span>(letters, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">21</span>)) <span class="co"># of course!</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "a" "b" "c" "d" "e"</code></pre>
 </div>
 </div>
 <p><br>
 </p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="fu">back</span>(letters, <span class="sc">-</span><span class="dv">1</span>) <span class="co"># you'll only confuse yourself</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-error">
-<pre><code>Error in back(letters, -1): all(ix &gt; 0) is not TRUE</code></pre>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a>letters[<span class="dv">0</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>character(0)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="fu">back</span>(letters, <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>character(0)</code></pre>
 </div>
 </div>
 <p><br>
 </p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="fu">back</span>(letters, <span class="dv">30</span>) <span class="co"># you're over-excited</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a>letters[<span class="dv">30</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a><span class="fu">back</span>(letters, <span class="dv">30</span>) <span class="co"># don't get over-excited</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-error">
-<pre><code>Error in back(letters, 30): all(ix &lt;= length(x)) is not TRUE</code></pre>
+<pre><code>Error in .back_ix(x, ix): all(abs(ix) &lt;= length(x)) is not TRUE</code></pre>
 </div>
 </div>
 </section>
