@@ -46,7 +46,7 @@ tail(letters, 2:4)  # boring
 tail(letters, 1) <- "Z"   # boooring
 ```
 
-# Flip it and reverse it
+# Reverse of helpful
 
 ```{r}
 rev(letters)[1:3]                     # ok...
@@ -136,4 +136,4 @@ back(letters, -1) # you'll only confuse yourself
 
 No I will not be producing a CRAN package
 
-![](images/4252.jpg.webp)
+![](images/4252.jpg.webp){fig-alt="The Beatles recording Get Back"}
