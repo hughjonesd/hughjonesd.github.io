@@ -126,14 +126,18 @@ back(letters, 0)  # don't get too clever
 back(letters, -1) # you'll only confuse yourself
 ```
 
+# Gist
+
+[Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa)
+
+<https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa>
+
+No I will not be producing a CRAN package
+
 # 
 
 #### Conclusion:
 
 #### Get `back`  to where you once belonged
-
-[Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa) <https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa>
-
-No I will not be producing a CRAN package
 
 ![](images/4252.jpg.webp){fig-alt="The Beatles recording Get Back"}
