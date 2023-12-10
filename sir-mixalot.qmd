@@ -130,8 +130,6 @@ back(letters, -1) # you'll only confuse yourself
 
 No I will not be producing a CRAN package
 
-# 
-
 # Conclusion
 
 ![](images/4252.jpg.webp){fig-alt="The Beatles recording Get Back"}
