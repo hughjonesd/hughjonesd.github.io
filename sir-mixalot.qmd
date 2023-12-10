@@ -132,7 +132,7 @@ back(letters, -1) # you'll only confuse yourself
 
 #### Get `back`  to where you once belonged
 
-[Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa)
+[Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa) <https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa>
 
 No I will not be producing a CRAN package
 
