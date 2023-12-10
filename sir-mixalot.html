@@ -479,19 +479,18 @@ David Hugh-Jones
 <h3 id="why-dont-people-do-this-are-they-stupid">Why don’t people do this, are they stupid</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>back <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix) {</span>
-<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(ix <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(ix <span class="sc">&gt;</span> <span class="dv">0</span>), <span class="fu">all</span>(ix <span class="sc">&lt;=</span> <span class="fu">length</span>(x)))</span>
 <span id="cb17-3"><a href="#cb17-3"></a>  endpoint <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb17-4"><a href="#cb17-4"></a>  endpoint <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb17-5"><a href="#cb17-5"></a>  x[endpoint <span class="sc">-</span> ix]</span>
-<span id="cb17-6"><a href="#cb17-6"></a>}</span>
+<span id="cb17-4"><a href="#cb17-4"></a>  x[endpoint <span class="sc">-</span> ix]</span>
+<span id="cb17-5"><a href="#cb17-5"></a>}</span>
+<span id="cb17-6"><a href="#cb17-6"></a></span>
 <span id="cb17-7"><a href="#cb17-7"></a></span>
-<span id="cb17-8"><a href="#cb17-8"></a></span>
-<span id="cb17-9"><a href="#cb17-9"></a><span class="st">`</span><span class="at">back&lt;-</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix, value) {</span>
-<span id="cb17-10"><a href="#cb17-10"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(ix <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
-<span id="cb17-11"><a href="#cb17-11"></a>  endpoint <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb17-12"><a href="#cb17-12"></a>  x[endpoint <span class="sc">-</span> ix] <span class="ot">&lt;-</span> value</span>
-<span id="cb17-13"><a href="#cb17-13"></a>  x</span>
-<span id="cb17-14"><a href="#cb17-14"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb17-8"><a href="#cb17-8"></a><span class="st">`</span><span class="at">back&lt;-</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="cf">function</span> (x, ix, value) {</span>
+<span id="cb17-9"><a href="#cb17-9"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(ix), <span class="fu">all</span>(ix <span class="sc">&gt;</span> <span class="dv">0</span>), <span class="fu">all</span>(ix <span class="sc">&lt;=</span> <span class="fu">length</span>(x)))</span>
+<span id="cb17-10"><a href="#cb17-10"></a>  endpoint <span class="ot">&lt;-</span> <span class="fu">length</span>(x) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb17-11"><a href="#cb17-11"></a>  x[endpoint <span class="sc">-</span> ix] <span class="ot">&lt;-</span> value</span>
+<span id="cb17-12"><a href="#cb17-12"></a>  x</span>
+<span id="cb17-13"><a href="#cb17-13"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></section>
 <section id="so-obvious" class="title-slide slide level1 center">
 <h1>So obvious</h1>
@@ -554,6 +553,14 @@ David Hugh-Jones
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="fu">back</span>(letters, <span class="sc">-</span><span class="dv">1</span>) <span class="co"># you'll only confuse yourself</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in back(letters, -1): all(ix &gt; 0) is not TRUE</code></pre>
+</div>
+</div>
+<p><br>
+</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="fu">back</span>(letters, <span class="dv">30</span>) <span class="co"># you're over-excited</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in back(letters, 30): all(ix &lt;= length(x)) is not TRUE</code></pre>
 </div>
 </div>
 </section>

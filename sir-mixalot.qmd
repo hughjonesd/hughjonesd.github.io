@@ -64,15 +64,14 @@ rev(letters)[1:3] <- c("Z", "Y", "X") # why :-(
 
 ```{r}
 back <- function (x, ix) {
-  stopifnot(is.numeric(ix), all(ix > 0))
-  endpoint <- length(x) + 1
+  stopifnot(is.numeric(ix), all(ix > 0), all(ix <= length(x)))
   endpoint <- length(x) + 1
   x[endpoint - ix]
 }
 
 
 `back<-` <- function (x, ix, value) {
-  stopifnot(is.numeric(ix), all(ix > 0))
+  stopifnot(is.numeric(ix), all(ix > 0), all(ix <= length(x)))
   endpoint <- length(x) + 1
   x[endpoint - ix] <- value
   x
@@ -126,7 +125,13 @@ back(letters, 0)  # don't get too clever
 back(letters, -1) # you'll only confuse yourself
 ```
 
-# [Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa) 
+\
+
+```{r}
+back(letters, 30) # you're over-excited
+```
+
+# [Gist](https://gist.github.com/hughjonesd/0bbf0440d04fa1e3a967e780c749bafa)
 
 No I will not be producing a CRAN package
 
