@@ -68,6 +68,7 @@ find_assignments <- function (snip) {
 
 gh_ass <- find_assignments(github_data)
 so_ass <- find_assignments(so_questions)
+ex_ass <- find_assignments(package_examples)
 
 make_stats <- function (ass) {
   n_assignments <- lengths(ass)
@@ -81,23 +82,25 @@ make_stats <- function (ass) {
 
 gh_stats <- make_stats(gh_ass)
 so_stats <- make_stats(so_ass)
+ex_stats <- make_stats(ex_ass)
 
 github_data <- cbind(github_data, gh_stats)
 so_questions <- cbind(so_questions, so_stats)
+package_examples <- cbind(package_examples, ex_stats)
 
 github_data <- as_tibble(github_data)
 so_questions <- as_tibble(so_questions)
+package_examples <- as_tibble(package_examples)
 
-gh_summary <- github_data |> 
-  summarize(
-    n = nrow(github_data),
+summarize_stats <- function (data) {
+  summarize(data,
+    n = nrow(data),
     prop_pipeable = sum(n_pipeable)/sum(n_assignments),
     prop_both = sum(n_both)/sum(n_assignments),
   ) 
+}
 
-so_summary <- so_questions |> 
-  summarize(
-    n = nrow(so_questions),
-    prop_pipeable = sum(n_pipeable)/sum(n_assignments),
-    prop_both = sum(n_both)/sum(n_assignments),
-  ) 
+gh_summary <- summarize_stats(github_data)
+so_summary <- summarize_stats(so_questions)
+ex_summary <- summarize_stats(package_examples)
+
