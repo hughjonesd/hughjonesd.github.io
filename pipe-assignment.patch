@@ -1,0 +1,99 @@
+diff --git a/src/main/gram.y b/src/main/gram.y
+index 5e95c1b2dd..8763b7726a 100644
+--- a/src/main/gram.y
++++ b/src/main/gram.y
+@@ -381,6 +381,7 @@ static SEXP	xxrepeat(SEXP, SEXP);
+ static SEXP	xxnxtbrk(SEXP);
+ static SEXP	xxfuncall(SEXP, SEXP);
+ static SEXP	xxdefun(SEXP, SEXP, SEXP, YYLTYPE *);
++static SEXP	xxpipeassign(SEXP, SEXP, YYLTYPE *);
+ static SEXP	xxpipe(SEXP, SEXP, YYLTYPE *);
+ static SEXP	xxpipebind(SEXP, SEXP, SEXP, YYLTYPE *);
+ static SEXP	xxunary(SEXP, SEXP);
+@@ -412,6 +413,7 @@ static int	xxvalue(SEXP, int, YYLTYPE *);
+ /* no longer used: %token COLON_ASSIGN */
+ %token		SLOT
+ %token		PIPE
++%token		PIPE_ASSIGN
+ %token          PLACEHOLDER
+ %token          PIPEBIND
+ 
+@@ -423,6 +425,7 @@ static int	xxvalue(SEXP, int, YYLTYPE *);
+ %right		LEFT_ASSIGN
+ %right		EQ_ASSIGN
+ %left		RIGHT_ASSIGN
++%right      PIPE_ASSIGN
+ %left		'~' TILDE
+ %left		OR OR2
+ %left		AND AND2
+@@ -490,8 +493,9 @@ expr	: 	NUM_CONST			{ $$ = $1;	setId(@$); }
+ 	|	expr OR expr			{ $$ = xxbinary($2,$1,$3);	setId(@$); }
+ 	|	expr AND2 expr			{ $$ = xxbinary($2,$1,$3);	setId(@$); }
+ 	|	expr OR2 expr			{ $$ = xxbinary($2,$1,$3);	setId(@$); }
+-	|	expr PIPE expr			{ $$ = xxpipe($1,$3,&@3);       setId(@$); }
++	|	expr PIPE expr			{ $$ = xxpipe($1,$3,&@3);	setId(@$); }
+ 	|	expr PIPEBIND expr		{ $$ = xxpipebind($2,$1,$3,&@2);	setId(@$); }
++	|	expr PIPE_ASSIGN expr	{ $$ = xxpipeassign($1,$3,&@3);	setId(@$); }
+ 	|	expr LEFT_ASSIGN expr 		{ $$ = xxbinary($2,$1,$3);	setId(@$); }
+ 	|	expr RIGHT_ASSIGN expr 		{ $$ = xxbinary($2,$3,$1);	setId(@$); }
+ 	|	FUNCTION '(' formlist ')' cr expr_or_assign_or_help %prec LOW
+@@ -1257,6 +1261,16 @@ static SEXP findExtractorChainPHCell(SEXP placeholder, SEXP rhs, SEXP expr,
+     else return NULL;
+ }
+ 
++
++static SEXP xxpipeassign(SEXP lhs, SEXP rhs, YYLTYPE *lloc_rhs) 
++{
++	SEXP rhs2 = xxpipe(lhs, rhs, lloc_rhs);
++	SEXP lass = install("<-");
++	SEXP res = lang3(lass, lhs, rhs2);
++	return res;
++}
++
++
+ static SEXP xxpipe(SEXP lhs, SEXP rhs, YYLTYPE *lloc_rhs)
+ {
+     SEXP ans;
+@@ -2349,6 +2363,7 @@ static void yyerror(const char *s)
+ 	"NS_GET_INT",	"':::'",
+ 	"PIPE",         "'|>'",
+ 	"PIPEBIND",     "'=>'",
++	"PIPE_ASSIGN",     "'<|>'",
+ 	"PLACEHOLDER",  "'_'",
+ 	0
+     };
+@@ -3595,6 +3610,13 @@ static int token(void)
+ 	    else
+ 		return ERROR;
+ 	}
++	if (nextchar('|')) {
++		if (nextchar('>')) {
++			yylval = install_and_save("<|>");
++			return PIPE_ASSIGN;
++		} else 
++		return ERROR;
++	}
+ 	yylval = install_and_save("<");
+ 	return LT;
+     case '-':
+@@ -3914,6 +3936,7 @@ static int yylex(void)
+     case LEFT_ASSIGN:
+     case RIGHT_ASSIGN:
+     case EQ_ASSIGN:
++	case PIPE_ASSIGN:
+ 	EatLines = 1;
+ 	break;
+ 
+diff --git a/src/main/names.c b/src/main/names.c
+index fcb62dd86d..4b7b43f56e 100644
+--- a/src/main/names.c
++++ b/src/main/names.c
+@@ -1038,7 +1038,7 @@ static char *Spec_name[] = {
+     "~", "@", "=>",
+     "==", "!=", "<", ">", "<=", ">=",
+     "&", "|", "&&", "||", "!",
+-    "<-", "<<-", "=",
++    "<-", "<<-", "=", "<|>",
+     "$", "[", "[[",
+     "$<-", "[<-", "[[<-",
+     0
