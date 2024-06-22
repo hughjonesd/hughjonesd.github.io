@@ -338,7 +338,9 @@ sig_indirect <- inner_join(sig_assocs_twice, sig_assocs_twice,
                           by = c("pkg2" = "pkg1"),
                           relationship = "many-to-many") |> 
   select(-pkg2) |> 
-  rename(pkg2 = pkg2.y) 
+  rename(pkg2 = pkg2.y) |> 
+  # remove paths that loop back on themselves
+  filter(pkg1 != pkg2)
 ```
 
 Then we'll remove any packages that have a *direct* link between them.
