@@ -17,11 +17,11 @@ The [codesamples](https://github.com/hughjonesd/codesamples) package on github c
 
 You can use this data to learn interesting things about R, like:
 
--    what functions are used most often?
+-   what functions are used most often?
 
 -   what functions are often called together in the data?
 
-Here, I'm going to look at R packages. What packages often get used together? This is interesting, because potentially it can help people find relevant packages to their use case.
+Here, I'm going to look at R packages. What packages often get used together? This is interesting, because potentially it can help people find relevant packages to their use case. I'll use the Stackoverflow data.
 
 # Counting libraries
 
@@ -284,7 +284,7 @@ ig |>
 
 Again, these results look intuitively sensible. We can see:
 
--    a large tidyverse cluster;
+-   a large tidyverse cluster;
 
 -   a time-series cluster with `{quantmod}` and `{zoo}` ;
 
