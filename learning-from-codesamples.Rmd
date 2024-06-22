@@ -1,0 +1,386 @@
+---
+title: "What packages belong together? Learning from R code samples"
+author: "David Hugh-Jones"
+date: "`r Sys.Date()`"
+output:   
+  html_document: 
+    highlight: tango
+    code_folding: hide
+    toc: true
+    toc_float: true
+    fig_width: 9
+editor_options: 
+  chunk_output_type: console
+---
+
+The [codesamples](https://github.com/hughjonesd/codesamples) package on github contains code snippets from 3 sources: R package examples, github projects, and Stackoverflow questions. It tries to be a reasonably representative source of real R code "in the wild".
+
+You can use this data to learn interesting things about R, like:
+
+-    what functions are used most often?
+
+-   what functions are often called together in the data?
+
+Here, I'm going to look at R packages. What packages often get used together? This is interesting, because potentially it can help people find relevant packages to their use case.
+
+# Counting libraries
+
+As a first step, I'm going to count each `library()` call mentioned in our code. I could look for `loadNamespace()` calls, or fully-qualified function names like `dplyr::filter()` , but `library()` is common enough that it will probably do.
+
+First let's load some packages of our own:
+
+```{r setup, echo = TRUE, warning = FALSE, message = FALSE, class.source = "fold-show"}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(conflicted)
+conflict_prefer_all("dplyr", quiet = TRUE)
+
+# pak::pkg_install("hughjonesd/codesamples")
+library(codesamples)
+
+library(dplyr)
+library(ggraph)
+library(gt)
+library(igraph)
+library(purrr)
+library(stringr)
+library(tidygraph)
+library(tidyr)
+
+```
+
+Now we extract the library calls and create a list of calls for each post.
+
+```{r extract-packages, cache = TRUE, class.source = "fold-show"}
+
+extract_packages <- function (snippets) {
+  pattern <- paste0("library\\(", # library(
+                    "('|\")?",    # an optional quote mark
+                    "([A-Za-z][A-Za-z0-9\\.]+[A-Za-z0-9])", # the package
+                    "('|\")?",    # optional quote mark
+                    "\\)"         # end bracket
+                    )
+  matches <- str_match_all(snippets, pattern)
+  matches <- map(matches, \(x) x[, 3])
+  
+  return(matches)
+}
+
+
+co_packages <- so_questions |> 
+  mutate(
+    packages = extract_packages(so_questions$snippet)
+  ) |> 
+  select(post_id, packages) |> 
+  # creates one row for each unique member of the packages list-clumn
+  tidyr::unchop(packages)
+
+            
+```
+
+The table below lists the top 20 packages in the data:
+
+```{r list-top-20}
+co_packages |> 
+  count(packages) |> 
+  arrange(desc(n)) |> 
+  mutate(
+    Rank = 1:n()
+  ) |> 
+  rename(
+    Package = packages
+  ) |> 
+  slice_head(n = 20) |> 
+  gt::gt() |> 
+  gt::tab_caption(md(
+    "**Top 20 packages in a sample of Stackoverflow R snippets**"
+  ))
+```
+
+The top 5 are not surprising. But `{plotly}` , `{raster}` and `{plyr}` make it to the top 10, which I did not necessarily expect. One possibility is that some packages are harder to use and generate a lot of SO questions. Or, since the data stretches back to 2013, some old packages get mentioned more than you might expect nowadays. Remember `{reshape2}` ?
+
+# Making a co-occurrence matrix
+
+Now, we do some data cleaning to convert our data into a *co-occurrence matrix*, where each row and column represents a package, and the cell counts the number of times the two packages were together. First, we create columns of dummy variables for each snippet.
+
+```{r create-matrix, class.source = "fold-show"}
+
+# Create columns of dummy variables
+package_names <- unique(co_packages$packages)
+co_package_mx <- co_packages
+co_package_mx[, package_names] <- FALSE
+
+walk(package_names, \(nm) {
+  co_package_mx[nm] <<- co_package_mx$packages == nm}
+)
+
+# Add up the co-occurrences
+co_package_mx <- summarize(co_package_mx, 
+                         .by = post_id,
+                         # return TRUE if any row has TRUE for the package
+                          across(any_of(package_names), any))
+
+# Make it a matrix
+co_package_mx <- co_package_mx |> 
+  select(-post_id) |> 
+  as.matrix()
+
+```
+
+To keep our data manageable, we'll ignore any packages which are only mentioned in one post. We aren't going to learn much from those anyway.
+
+```{r remove-singletons, class.source = "fold-show"}
+
+mentioned_once <- colSums(co_package_mx) <= 1
+co_package_mx <- co_package_mx[, ! mentioned_once]
+```
+
+Now we can create the co-occurrence matrix.
+
+```{r create-package-graph, cache=TRUE, autodep=TRUE, class.source = "fold-show"}
+
+package_names <- colnames(co_package_mx)
+
+n_packages <- length(package_names)
+co_package_graph <- matrix(NA_integer_, nrow = n_packages, 
+                           ncol = n_packages)
+rownames(co_package_graph) <- colnames(co_package_graph) <- package_names
+
+# For each package, count how often each other package is with it
+for (pkg in package_names) {
+  in_post <- co_package_mx[, pkg]
+  posts_with_pkg <- co_package_mx[in_post, , drop = FALSE] 
+  pkgs_with_pkg <- colSums(posts_with_pkg) 
+  # Populate the graph matrix
+  co_package_graph[pkg, ] <- pkgs_with_pkg
+}
+
+# Diagonal elements are the *total* number of times a package is 
+# used (the number of times it appears with itself)
+total_mentions <- diag(co_package_graph)
+
+```
+
+We'll also remove any packages that only appear on their own.
+
+```{r remove-singletons-again, class.source = "fold-show"}
+loners <- colSums(co_package_graph > 0) == 1
+co_package_graph <- co_package_graph[! loners, ! loners]
+package_names <- rownames(co_package_graph)
+```
+
+We still have very many associations, and most of them are likely meaningless. To trim our network a bit, let's look only for significant associations. We'll run chi-squared tests for each pair of packages.
+
+```{r find-sig-assocs, cache = TRUE, autodep = TRUE, class.source = "fold-show"}
+
+n_posts <- length(unique(so_questions$post_id))
+
+package_names <- rownames(co_package_graph)
+
+package_pvals <- matrix(NA_real_, 
+                        nrow(co_package_graph), 
+                        ncol(co_package_graph))
+rownames(package_pvals) <- colnames(package_pvals) <- package_names
+
+suppressWarnings({
+  for (pkg1 in package_names) for (pkg2 in package_names) {
+    if (pkg1 >= pkg2) next
+    n_together <- co_package_graph[pkg1, pkg2]
+    n_pkg1 <- co_package_graph[pkg1, pkg1]
+    n_pkg2 <- co_package_graph[pkg2, pkg2]
+    # matrix of counts for pkg1 present/absent, pkg2 present/absent
+    chisq_tbl <- matrix(
+      c(n_together, n_pkg1 - n_together, 
+        n_pkg2 - n_together, n_posts - n_pkg1 - n_pkg2), 2, 2)
+    test <- chisq.test(chisq_tbl)
+    package_pvals[pkg1, pkg2] <- test$p.value
+  }
+})
+
+```
+
+That's a lot of tests, so we'll use Bonferroni correction to avoid accepting too many false positives. By the way, the code below uses a [little-known trick](https://hughjonesd.github.io/subsetting.html) about R subsetting: if you subset with a two-column numeric matrix, then you can select individual cells. The first column becomes the row indices, and the second column is the column indices.
+
+```{r bonferroni-correction, class.source = "fold-show"}
+
+sig <- package_pvals < 0.05/length(package_pvals)
+sig <- which(sig, arr.ind = TRUE) 
+sig_assocs <- as_tibble(sig)
+sig_assocs$pkg1 <- package_names[sig_assocs$row]
+sig_assocs$pkg2 <- package_names[sig_assocs$col]
+# the magic of matrix-based indexing
+sig_assocs$p.value <- package_pvals[sig]
+
+sig_assocs <- sig_assocs |> 
+  select(pkg1, pkg2, p.value) |> 
+  filter(pkg1 < pkg2) # get rid of duplicates using alphabetic order
+
+
+```
+
+This is a slightly risky strategy, because the chi-squared test might be significant if packages are *negatively* associated, appearing with each other *less* often than you'd expect.
+
+In fact, that doesn't seem to happen. Here are the top 20 pairs of most-significantly associated packages. They look pretty sensible: these packages do belong together.
+
+```{r top-20-assocs}
+sig_assocs |> 
+  arrange(p.value) |> 
+  select(Package = pkg1, Friend = pkg2) |> 
+  slice_head(n = 20) |> 
+  gt::gt() |> 
+  gt::tab_caption(md("**20 significantly associated pairs of packages**"))
+```
+
+# Finding clusters of packages
+
+By keeping only clear associations, we've made the `sig_assocs` data frame a manageable size. This means we can start to play with network analysis, using Thomas Lin Pedersen's excellent [`{tidygraph}`](https://tidygraph.data-imaginist.com) and [`{ggraph}`](https://ggraph.data-imaginist.com) packages.
+
+Above, we see several groups of packages that are all associated with each other. That suggests using a clustering algorithm to put packages into different "communities".
+
+I picked a clustering algorithm by the advanced method of trying them until one gave sensible results. `cluster_walktrap()` seems to be OK.
+
+```{r graph-assocs, fig.cap = "", fig.fullwidth = TRUE}
+
+ig <- igraph::graph_from_data_frame(sig_assocs, directed = FALSE)
+ig <- tidygraph::as_tbl_graph(ig)
+
+clust <- igraph::cluster_walktrap(ig)
+
+# Add community data to the graph
+ig <- ig |> 
+  activate(nodes) |> 
+  mutate(
+    cluster = factor(membership(clust)),
+    mentions = total_mentions[name]
+  ) |> 
+  group_by(cluster) |> 
+  mutate(
+    n_members = n()
+  ) |> 
+  ungroup()
+
+
+# We'll use this to label just a few packages in each cluster
+top_3_per_cluster <- function (x)  {
+  x |> group_by(cluster) |> 
+    arrange(desc(mentions)) |> 
+    slice_head(n = 3)
+}
+
+
+ig |> 
+  filter(n_members >= 10) |> 
+  ggraph(layout = "fr") +  
+    geom_edge_link(colour = "grey85", linewidth = 0.5) +
+    geom_node_point(aes(colour = cluster)) +
+    geom_node_label(aes(label = name, fill = cluster), size = 2.5,
+                    data = top_3_per_cluster, repel = TRUE) + 
+    theme(legend.position = "none") +
+    labs(
+      title = "Clusters of packages in Stackoverflow snippets"
+    )
+
+```
+
+Again, these results look intuitively sensible. We can see:
+
+-    a large tidyverse cluster;
+
+-   a time-series cluster with `{quantmod}` and `{zoo}` ;
+
+-   a spatial data cluster with `{rgdal}` , `{raster}` and `{ggmap}` ;
+
+-   a "make it go faster" cluster, maybe, with `{Rcpp}` , `{data.table}` and `{microbenchmark}` ;
+
+-   clusters for parallel processing, Shiny, web scraping and database access.
+
+# Finding alternatives
+
+Can we do more?
+
+Suppose that some packages are *alternatives* to each other - they are often used for similar tasks, but rarely used together. Canonical examples might be `{dplyr}` and `{data.table}` , or `{sp}` and `{sf}` .
+
+If so, we might expect those packages to be used with similar sets of other packages, but not to have a direct link between them. So you might see
+
+``` {.R .fold-show}
+library(sf)
+library(maptools)
+```
+
+or
+
+``` {.R .fold-show}
+library(sp)
+library(maptools)
+```
+
+but rarely
+
+``` {.R .fold-show}
+library(sf)
+library(sp)
+```
+
+Let's look for such pairs of packages. We'll join `sig_assocs` to itself, to get indirect associations between pairs of packages.
+
+```{r create-indirect-assocs, class.source = "fold-show"}
+
+sig_assocs_reversed <- sig_assocs |> 
+  select(pkg2, pkg1, p.value) |> 
+  rename(pkg1 = pkg2, pkg2 = pkg1)
+
+sig_assocs_twice <- rbind(sig_assocs, sig_assocs_reversed) |> 
+  select(pkg1, pkg2) |> 
+  arrange(pkg1, pkg2) 
+
+# To capture all links, we have to go both ways through the graph
+sig_indirect <- inner_join(sig_assocs_twice, sig_assocs_twice, 
+                          by = c("pkg2" = "pkg1"),
+                          relationship = "many-to-many") |> 
+  select(-pkg2) |> 
+  rename(pkg2 = pkg2.y) 
+```
+
+Then we'll remove any packages that have a *direct* link between them.
+
+```{r filter-for-alternatives, class.source = "fold-show"}
+alts <- sig_indirect |> 
+  anti_join(sig_assocs_twice, by = join_by(pkg1, pkg2)) |> 
+  add_count(pkg1, pkg2) |> 
+  distinct(pkg1, pkg2, .keep_all = TRUE)
+
+```
+
+Lastly, we'll filter for packages with a minimum number of indirect paths between them, to avoid too many false positives.
+
+```{r alternatives-DT, class.source = "code-show"}
+alts |> 
+  filter(n >= 3) |> 
+  select(Package = pkg1, Alternative = pkg2) |> 
+  DT::datatable(filter = "top", caption = "Alternative packages")
+```
+
+Exploring the above, it seems to work *sometimes*. `{dplyr}` and `{data.table}` don't show up – perhaps those packages just live in too different worlds. But pairs of packages like `{PerformanceAnalytics}` and `{ROI}` , or `{RCurl}` and `{rvest}` might be reasonable alternatives. Then again, is `{RColorBrewer}` really an alternative to `{rtweet}` ? Hmm.... We might do better with a subtler network analysis, but I'll leave it here for now.
+
+# Data
+
+Here's the list of communities.
+
+```{r communities-DT, echo = FALSE}
+ig |> 
+  as_tibble() |> 
+  arrange(cluster, desc(mentions)) |> 
+  mutate(.by = cluster,
+    `Other packages` = paste(na.omit(c(name[1:5], "...")), collapse = ", "),
+  ) |> 
+  DT::datatable(filter = "top")
+```
+
+Here's the full list of associated packages:
+
+```{r assocs-DT, echo = FALSE}
+  
+DT::datatable(sig_assocs_twice, filter = "top")
+```
+
+Or you can get the [codesamples](https://github.com/hughjonesd/codesamples) data from github and run [this script](https://hughjonesd.github.io/learning-from-codesamples.Rmd) yourself.
