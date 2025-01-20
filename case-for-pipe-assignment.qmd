@@ -1,0 +1,418 @@
+---
+title: "The case for a pipe assignment operator in R"
+author: David Hugh-Jones
+format: html
+table-of-contents: true
+---
+
+
+
+# Assignment in R
+
+Here are two key facts about R: 
+
+* R is *pass by value*;
+* R has complex, expressive idioms for assigning to subsets.
+
+Pass by value means that you can almost never change an
+object like this:
+
+``` r
+do_something(obj)
+```
+
+That just gives the function a copy of `obj`; the original
+`obj` will be unchanged. Instead, you write:
+
+``` r
+obj <- do_something(obj)
+```
+
+Complex subsetting means that not just simple objects can be
+on the left hand side of assigments. You can also write:
+
+``` r
+data[condition, cols] <- do_something(data[condition, cols])
+```
+
+This replaces the rows where `condition` is `TRUE` and the columns
+specified in `cols`. And there are lvalue functions too:
+
+``` r
+names(data) <- str_remove(names(data), "\\d+$")
+```
+
+Combining these can lead to expressive, but complex, transformations:
+
+``` r
+names(data)[1:2] <- paste0(names(data)[1:2], "_suffix")
+```
+
+The duplication here makes the code hard to read, and easy to
+break, for example by updating the subset index on the left
+hand side and forgetting to do the same on the right. You
+might prefer to break this down for legibility:
+
+``` r
+index <- 1:2
+new_names <- names(data)[index]
+new_names <- paste0(new_names, "_suffix")
+names(data)[index] <- new_names
+```
+
+# The pipe operator
+
+R 4.1.0 introduced the native pipe operator. A simple syntax
+transformation converts
+
+```r
+x |> mean(na.rm = TRUE)
+```
+
+into
+
+``` r
+mean(x, na.rm = TRUE)
+```
+
+The `x` on the left enters the function on the right, as its first argument.
+
+In terms of language capabilities, this was a no-op: R
+didn't gain the ability to do anything it couldn't already do.
+But by putting the subject of the code first, and operations 
+done to it in order, the pipe can make R code much more expressive:
+
+``` r
+library(dplyr)
+mtcars |> 
+  group_by(gear) |> 
+  mutate(kw = hp * 0.746) |> 
+  summarize(mean_kw = mean(kw))
+```
+
+# Pipe assignment
+
+I'd like to propose a new **pipe assignment** operator for R.
+The pipe assignment operator would convert:
+
+``` r
+obj <|> do_something(...)
+```
+
+into: 
+
+``` r
+obj <- do_something(obj, ...)
+```
+
+Equivalently, `obj <|> do_something()` can be read as
+`obj <- obj |> do_something()`.
+
+Having this operator would make code simpler and more
+expressive, and reduce bugs. For example, the complex
+assignments above could be rewritten:
+
+```r
+data[condition, cols] <- do_something(data[condition, cols])
+# becomes
+data[condition, cols] <|> do_something()
+
+names(data)[1:2] <- paste0(names(data)[1:2], "_suffix")
+# becomes
+names(data)[1:2] <|> paste0("_suffix")
+```
+
+The new versions are easier to read: you only need to parse
+one complex expression, instead of two. And they are harder to
+break, because the left and right hand sides don't need to be
+kept in sync.
+
+# Some evidence
+
+How useful would pipe assignment be? I used a 
+[newly-created database of R code](https://github.com/hughjonesd/codesamples) to look for
+assignments. The tables below show statistics from about
+26,000 code snippets, from GitHub repositories,
+StackOverflow questions and R package examples ([code](find-pipeable-assignments.R)).
+I counted what proportion of 
+assignments were *pipeable*, i.e. of the form
+`a <- foo(a, ...)`. I also counted how many were *complex*,
+i.e. like `a$blah <- foo(a$blah, ...)` or 
+`a[subset] <- foo(a[subset], ...)`.
+
+```{r}
+#| file: find-pipeable-assignments.R
+#| cache: true
+#| echo: false
+#| output: false
+```
+
+```{r}
+#| echo: false
+library(huxtable)
+suppressPackageStartupMessages(library(dplyr))
+
+summaries <- bind_rows(
+  GitHub = gh_summary,
+  StackOverflow = so_summary,
+  Examples = ex_summary,
+  .id = "Source")
+
+summaries |> 
+  rename(
+    Source = Source,
+    N = n,
+    `Pipeable (%)` = prop_pipeable,
+    `Pipeable and complex (%)` = prop_both
+  ) |> 
+  as_hux() |> 
+  set_number_format(everywhere, 3:4, fmt_percent(1)) |> 
+  set_caption("Statistics of code snippets")
+```
+
+
+About 4-10% of all assignments could be simplified using an
+assignment pipe. That is a big potential gain, because
+assignment is probably the single most common operation in R
+code. The GitHub data contains about 9000
+uses of `<-`, of which about 900 could be simplified. For
+comparison, it contains about 740 uses of the function
+`median`. Even in the R examples, which are meant to be
+concise, 4% of assignments were of the form `x <- foo(x)`.
+
+A smaller proportion of assignments are both pipeable and complex. Here are some standout cases of long, complex assignments:
+
+``` r
+# from StackOverflow questions:
+
+w[(midpoint - formerBreak):(midpoint + formerBreak), 
+  (midpoint - formerBreak):(midpoint + formerBreak)] <- 
+  w[(midpoint - formerBreak):(midpoint + formerBreak), 
+    (midpoint - formerBreak):(midpoint + formerBreak)] * 
+    (wOld == 0)
+
+paretoData$EffectNames = factor(paretoData$EffectNames, 
+  levels = c("Pull Back(A)", "Hook(B)", "Peg(C)", "AB", "BC",
+             "AC", "ABC"))
+             
+mean.vis.aud.long$Visual = Relevel(mean.vis.aud.long$Visual,
+                ref = c("LeftCust", "SIMCust", "RightCust"))
+                
+data[data$category == category, ]$value = 
+  data[data$category == category, ]$value /
+  data[data$category == category & 
+       data$year == baseYear,]$value[[1]]
+       
+wardmap@data = data.frame(
+                 wardmap@data, 
+                 mayor2015[
+                   match(wardmap@data[, "WARD"], 
+                   mayor2015[, "WARD"]), ])
+```
+
+Got that 😉? Note that the last expression could be rewritten
+as
+
+``` r
+wardmap@data <|> (function (x) {
+  data.frame(x, 
+             mayor2015[
+               match(x[, "WARD"], mayor2015[, "WARD"]), 
+             ]))()
+```
+
+It could be done even more simply if the pipe assignment
+operator had a way to pass the left hand side into multiple places. (And if there were a nice way to write anonymous function calls in R - but that's another topic.)
+
+StackOverflow questioners might not be good at writing simple
+code. What about Github? Here's some examples:
+
+``` r
+data_for_model$factor_parameter_dictionary = 
+    bind_rows(data_for_model$factor_parameter_dictionary,    
+        mutate(tibble(design_matrix_col = 
+            names(select_if(distinct(select(.data_spread, 
+               all_of(parse_formula(formula)))), function(x) 
+                       is.numeric(x)))), 
+                       factor = design_matrix_col))
+                       
+                       
+HillTN95[(1 + nrow(BasinSF) * (h - 1)):(1 + nrow(BasinSF) * (h - 1) + (nrow(BasinSF) - 1)), ] = 
+  HillTN95[(1 + nrow(BasinSF) * (h - 1)):(1 + nrow(BasinSF) *
+    (h - 1) + (nrow(BasinSF) - 1)), ] # if you are lost, this is the end 
+                                      # of the original left hand side...
+    [order(HillTN95[(1 + nrow(BasinSF) * (h - 1)):(1 +
+      nrow(BasinSF) * (h - 1) + (nrow(BasinSF) -
+      1)),]$Replicate),] # ... and here it is again
+```
+
+I'm not saying duplicated variables are the *only* problems 
+of this code. But duplicated variables certainly
+are not helping. 
+
+But even experienced R coders could benefit from this idiom.
+Here's more GitHub examples, with some famous names:
+
+
+``` r
+# tidyverse/tibble
+x[needs_ticks] <- tick(x[needs_ticks])
+
+# RConsortium/S7
+signature[sig_is_union] <- lapply(signature[sig_is_union], "[[", "classes")
+signature[!sig_is_union] <- lapply(signature[!sig_is_union], list)
+
+# RevolutionAnalytics/dplyr-spark
+mask = sapply(values, is.factor)
+values[mask] = lapply(values[mask], as.character)
+mask = sapply(values, is.character)
+values[mask] = lapply(values[mask], encodeString)
+
+# r-forge/optimizer
+expr[[i]] <- nlsSimplify(expr[[i]], simpEnv, verbose = verbose)
+
+# tidyverse/ggplot2
+colnames(coef) <- to_lower_ascii(colnames(coef))
+
+# cran/Matrix
+x@x <- zapsmall(x@x, digits = digits)
+
+# wch/r-source
+# Yes, this is the R source code itself!
+x$sec <- trunc(x$sec)
+...
+res$ar <- aperm(res$ar, c(2L,3L,1L))
+```
+
+Lastly, here's some example code from R packages:
+
+``` r
+# jrSiCKLSNMF::CalculateUMAPSickleJr
+SimSickleJrSmall<-CalculateUMAPSickleJr(SimSickleJrSmall,
+umap.settings=umap.settings)
+SimSickleJrSmall<-CalculateUMAPSickleJr(SimSickleJrSmall,
+umap.settings=umap.settings,modality=1)
+SimSickleJrSmall<-CalculateUMAPSickleJr(SimSickleJrSmall,
+umap.settings=umap.settings,modality=2)
+
+
+# rms::predictrms
+dat <- cbind(dat, predict(fit, dat, se.fit=TRUE))
+
+
+# oce::`[[<-,section-method`        
+section[["sectionId"]] <- toupper(section[["sectionId"]])
+...
+section[["station", 10]][["temperature"]] <-
+    1e-3 + section[["station", 10]][["temperature"]]
+
+
+# inTrees:Num2Level
+rfList$list[[i]][, "prediction"] <-   
+  data.frame(dicretizeVector(rfList$list[[i]][, "prediction"],
+                             splitV))
+```
+
+Remember, examples are meant to be short and clear!
+
+In all of these cases, I think `<|>` could make the code clearer, less repetitive and more readable.
+
+
+# Avoiding hacks
+
+Another advantage of an assignment pipe is that it obviates
+the need for hacks to get round it. One example, arguably, is
+dplyr's `mutate()` function. Don't get me wrong, I love dplyr
+and it really changed R data manipulation for the better. But
+one of its advantages is just that:
+
+``` r
+... |> mutate(foo = foo + 1) |> ...
+```
+
+is easier to read than
+
+``` r
+data$foo <- data$foo + 1
+```
+
+And while mutate itself is powerful, it can only deal with
+one column at a time. When you want to change multiple columns, you have to use `across`, which looks like this:
+
+``` r
+   ... |> 
+       mutate(
+         across(cols, ~ foo(.x)
+       ) |> ....
+```
+
+I'm [not a fan](https://medium.com/p/ae364da6a46f) of `across`, I think it's complex to read
+and understand (in fact, I got it wrong in the first version
+of the code above). But the key point is that it is a
+workaround for:
+
+```r
+df[cols] <|> foo()
+```
+
+
+
+# Implementing it
+
+If it's such a good idea, why don't I submit a patch?
+
+Simply, I can't code C, certainly not well enough to deal 
+with the R source. 
+
+**Update**: but in the spirit of laziness, impatience and
+hubris, here is a [patch](pipe-assignment.patch) and
+see [this commit on github](https://github.com/hughjonesd/r-source/commit/de9b934ae89e59685f611022344570e0b51f2b3b). Output:
+
+``` r
+a <- 1:5
+a <|> mean()
+a
+## [1] 3
+
+a <- 1:5
+a[1:2] <|> rev()
+a
+## [1] 2 1 3 4 5
+
+names(a) <- letters[1:5]
+names(a)[3:4] <|> paste0("-suffix")
+a
+##       a        b c-suffix d-suffix        e 
+##       2        1        3        4        5 
+
+# not everything works:
+a <|> sqrt() |> mean()
+## Error in sqrt() : 0 arguments passed to 'sqrt' which requires 1
+```
+
+
+I *believe* that the assignment pipe could
+be implemented relatively simply, like the original native
+pipe `|>`, as a syntax transformation.
+
+So, I'm hoping that R Core will consider this possibility.
+
+Meanwhile, R users can always import the magrittr package's
+`%<>%` operator, which does what I'm calling for:
+
+```{r}
+library(magrittr)
+x <- 1:5
+x %<>% mean()
+x
+```
+
+The magrittr `%<>%` is not implemented at R source level,
+which makes it relatively slow and complex. I think the
+advantage of `<|>` is just the same as the advantage of `|>`
+versus `%>%`: it can be native and fast.
+
+If you have comments or thoughts, drop me a line. I'm
+@davidhughjones on X, or davidhughjones on gmail.
+
+Merry Christmas/Season's Greetings and a Happy New Year!
