@@ -95,8 +95,8 @@ if (window.hljs) {
 
 
 
-<p>Let’s start with the bad news: obviously, if there ever was a contest between R
-and Python for dominance of machine learning, R has lost it. Nobody is writing
+<p>I’ll start on a downbeat note: clearly, if there ever was a contest between R
+and Python for dominance of machine learning, R has lost. Nobody is writing
 AI in R.</p>
 <p>There are probably a lot of reasons for that: R is niche, Python is general
 purpose; Python is slow but R is even slower; R is very REPL-oriented; R is
@@ -104,19 +104,19 @@ rooted in academia.</p>
 <p>It’s also fine. There is plenty of room for R in the world. An obvious niche
 is “statistical analysis and graphics on your laptop”. R has awesome graphics,
 at least two nice IDEs, and an unrivalled power to express common data
-science operations quickly and clearly. Python is improving but still has
-nothing as simple as</p>
+science operations quickly and clearly. Python still has nothing as simple
+and expressive as</p>
 <pre class="r"><code>dataset |&gt; 
   filter(var == &quot;value&quot;) |&gt; 
   select(column1, column2, ...)</code></pre>
 <p>Academics, data journalists and data scientists in organizations doing research
-can all turn to R for this.</p>
+can all turn to R for this kind of work.</p>
 <p>However, I do worry that R may stagnate. (Controversial take:
-increasing interest in R from the pharmaceutical industry, which, ah, uses
-RTF as a standardized file format, is not necessarily a good sign here.)</p>
+interest in R from the pharmaceutical industry, which, ah, uses
+RTF as a standardized file format, is not necessarily a good sign.)</p>
 <div id="big-data-on-your-macbook" class="section level1">
 <h1>Big data on your MacBook</h1>
-<p>One thing I think we should aim for is coping better with big data. Nowadays,
+<p>One thing we should aim for is dealing better with big data. Nowadays,
 even researchers without a big infrastructure should be able to analyse data
 with millions of rows and many predictors. There’s a lot of data around! We
 should use it!</p>
@@ -138,12 +138,11 @@ an R interface to that library. For the first time, R Mac users have easy
 access to operations on the GPU.</p>
 <p>Rmlx provides R access to MLX’s C++ API, plus a few handy utilities like
 coordinate descent and functions for working with probability distributions.
-It doesn’t itself do statistics for you, but developers can use Rmlx to write
+It doesn’t itself do statistics, but developers can use Rmlx to write
 fast statistical functions without needing to drop into C.</p>
 <p>A companion library, <a href="https://github.com/hughjonesd/RmlxStats">RmlxStats</a>,
 provides some basic statistical tests. There are MLX analogues to base R
-<code>lm</code> and <code>glm</code>, along with a very WIP version of <code>glmnet::glmnet()</code>. RmlxStats
-is pure R.</p>
+<code>lm</code> and <code>glm</code>, along with a very WIP version of <code>glmnet::glmnet()</code>.</p>
 <p>Here’s an example of the kind of work that Rmlx enables. We’ll use the
 large <code>nycflights13</code> dataset. A simple regression runs quickly in base R:</p>
 <pre class="r"><code>&gt; library(nycflights13)
@@ -169,11 +168,13 @@ packages like fixest or speedglm. GPU go brrrr.</p>
 <p>This is because MLX uses lazy evaluation, only running operations when they
 are needed. So developers can plug <code>mlxs_lm()</code>, or the underlying fit function,
 into more complex chains of output.</p>
-<p>Caveats: all of this is very early work. Also, a lot of it was vibe-coded.
-(I know,I know…. I’m sure a real programmer could do much better. If you want
-to help, you’re welcome. The source code is not yet an impenetrable pile of
-AI slop. By the way, I wrote this article myself - here is a short dash to
-prove it.)</p>
+<p>Both Rmlx and RmlxStats are very early in development. It’ll be interesting to
+see what works well on the GPU.</p>
+<p>You may also be interested to know that both packages were almost entirely
+vibe-coded. (I know,I know…. I’m sure a real programmer could do much
+better.) It’s been an interesting experience, with many up and downsides.
+The fact is, I could never have tackled an advanced R/C++ project like this
+without the help of an AI. We’ll see how it pans out.</p>
 </div>
 <div id="conclusion" class="section level1">
 <h1>Conclusion</h1>

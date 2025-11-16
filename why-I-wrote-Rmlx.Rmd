@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-Let's start with the bad news: obviously, if there ever was a contest between R
-and Python for dominance of machine learning, R has lost it. Nobody is writing
+I'll start on a downbeat note: clearly, if there ever was a contest between R
+and Python for dominance of machine learning, R has lost. Nobody is writing
 AI in R.
 
 There are probably a lot of reasons for that: R is niche, Python is general
@@ -21,8 +21,8 @@ rooted in academia.
 It's also fine. There is plenty of room for R in the world. An obvious niche
 is "statistical analysis and graphics on your laptop". R has awesome graphics,
 at least two nice IDEs, and an unrivalled power to express common data
-science operations quickly and clearly. Python is improving but still has
-nothing as simple as 
+science operations quickly and clearly. Python still has nothing as simple
+and expressive as 
 
   ```r
   dataset |> 
@@ -31,15 +31,15 @@ nothing as simple as
   ```
 
 Academics, data journalists and data scientists in organizations doing research
-can all turn to R for this.
+can all turn to R for this kind of work.
 
 However, I do worry that R may stagnate. (Controversial take:
-increasing interest in R from the pharmaceutical industry, which, ah, uses
-RTF as a standardized file format, is not necessarily a good sign here.) 
+interest in R from the pharmaceutical industry, which, ah, uses
+RTF as a standardized file format, is not necessarily a good sign.) 
 
 # Big data on your MacBook
 
-One thing I think we should aim for is coping better with big data. Nowadays,
+One thing we should aim for is dealing better with big data. Nowadays,
 even researchers without a big infrastructure should be able to analyse data
 with millions of rows and many predictors. There's a lot of data around! We
 should use it!
@@ -65,13 +65,12 @@ access to operations on the GPU.
 
 Rmlx provides R access to MLX's C++ API, plus a few handy utilities like
 coordinate descent and functions for working with probability distributions. 
-It doesn't itself do statistics for you, but developers can use Rmlx to write
+It doesn't itself do statistics, but developers can use Rmlx to write
 fast statistical functions without needing to drop into C. 
 
 A companion library, [RmlxStats](https://github.com/hughjonesd/RmlxStats), 
 provides some basic statistical tests. There are MLX analogues to base R 
-`lm` and `glm`, along with a very WIP version of `glmnet::glmnet()`. RmlxStats
-is pure R.
+`lm` and `glm`, along with a very WIP version of `glmnet::glmnet()`.
 
 Here's an example of the kind of work that Rmlx enables. We'll use the
 large `nycflights13` dataset. A simple regression runs quickly in base R:
@@ -117,11 +116,14 @@ This is because MLX uses lazy evaluation, only running operations when they
 are needed. So developers can plug `mlxs_lm()`, or the underlying fit function,
 into more complex chains of output.
 
-Caveats: all of this is very early work. Also, a lot of it was vibe-coded. 
-(I know,I know.... I'm sure a real programmer could do much better. If you want
-to help, you're welcome. The source code is not yet an impenetrable pile of
-AI slop. By the way, I wrote this article myself - here is a short dash to
-prove it.)
+Both Rmlx and RmlxStats are very early in development. It'll be interesting to 
+see what works well on the GPU.
+
+You may also be interested to know that both packages were almost entirely
+vibe-coded. (I know,I know.... I'm sure a real programmer could do much
+better.) It's been an interesting experience, with many up and downsides.
+The fact is, I could never have tackled an advanced R/C++ project like this
+without the help of an AI. We'll see how it pans out.
 
 # Conclusion
 
