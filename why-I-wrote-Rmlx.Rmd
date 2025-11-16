@@ -1,0 +1,130 @@
+---
+title: "Why I wrote Rmlx"
+author: "David Hugh-Jones"
+date: "2025-11-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Let's start with the bad news: obviously, if there ever was a contest between R
+and Python for dominance of machine learning, R has lost it. Nobody is writing
+AI in R.
+
+There are probably a lot of reasons for that: R is niche, Python is general
+purpose; Python is slow but R is even slower; R is very REPL-oriented; R is
+rooted in academia.
+
+It's also fine. There is plenty of room for R in the world. An obvious niche
+is "statistical analysis and graphics on your laptop". R has awesome graphics,
+at least two nice IDEs, and an unrivalled power to express common data
+science operations quickly and clearly. Python is improving but still has
+nothing as simple as 
+
+  ```r
+  dataset |> 
+    filter(var == "value") |> 
+    select(column1, column2, ...)
+  ```
+
+Academics, data journalists and data scientists in organizations doing research
+can all turn to R for this.
+
+However, I do worry that R may stagnate. (Controversial take:
+increasing interest in R from the pharmaceutical industry, which uses
+**RTF** as a standardized file format, is not necessarily a good sign here.) 
+
+One thing I think we should aim for is coping better with big data. Nowadays,
+even researchers without a big infrastructure should be able to analyse data
+with millions of rows and many predictors. There's a lot of data around! We
+should use it!
+
+It seems relevant and useful that many of us work on laptops with a powerful
+built-in processor ideally set up for basic statistical operations. I.e.
+we have Apple Silicon Macs, with a builtin GPU. 
+
+But R can't use the GPU! 
+
+An analogy here: until quite recently, we had multicore laptops but R couldn't
+use the multiple cores. It took packages like "parallel" in base, plus
+the futureverse, to change that.
+
+Helpfully, Apple has released the [MLX framework](https://mlx-framework.org)
+for working with Apple GPUs. It also has a CUDA backend, so Linux fans are
+not left out. So, I decided to write [Rmlx](https://github.com/hughjonesd/Rmlx), 
+an R interface to that library. For the first time, R Mac users have easy
+access to operations on the GPU.
+
+Rmlx provides R access to MLX's C++ API, plus a few handy utilities like
+coordinate descent and functions for working with probability distributions. 
+It doesn't itself do statistics for you, but developers can use Rmlx to write
+fast statistical functions without needing to drop into C. 
+
+A companion library, [RmlxStats](https://github.com/hughjonesd/RmlxStats), 
+provides some basic statistical tests. There are MLX analogues to base R 
+`lm` and `glm`, along with a very WIP version of `glmnet::glmnet()`. RmlxStats
+is pure R.
+
+Here's an example of the kind of work that Rmlx enables. We'll use the
+large `nycflights13` dataset. A simple regression runs quickly in base R:
+  
+  ```r
+  > library(nycflights13)
+  > system.time(summary(lm(arr_delay ~ dep_delay, data = flights)))
+     user  system elapsed 
+    0.077   0.005   0.086 
+  ```
+  
+But what if we want to control for the date of the flight? 
+
+  ```r
+  > system.time(summary(lm(arr_delay ~ dep_delay + paste0(day,"/",month), data = flights)))
+     user  system elapsed 
+   32.253   0.420  33.007 
+  ```
+  
+That's too slow to iterate on. 
+
+Let's drop in `RmlxStats::mlxs_lm()` as a replacement for `lm()`:
+  
+  ```r
+  > library(RmlxStats)
+  > system.time(summary(mlxs_lm(arr_delay ~ dep_delay + paste0(day,"/",month), data = flights)))
+     user  system elapsed 
+    4.348   0.404   3.167 
+  ```
+
+Ten times better. It's also [faster](https://hughjonesd.github.io/RmlxStats/articles/benchmarks.html) than many functions from specialized
+packages like fixest or speedglm. GPU go brrrr. 
+
+If you don't call summary, it's ten times faster again:
+
+  ```r
+  > system.time(x <- mlxs_lm(arr_delay ~ dep_delay + paste0(day,"/",month), data = flights))
+     user  system elapsed 
+    0.216   0.137   0.397 
+  ```
+
+This is because MLX uses lazy evaluation, only running operations when they 
+are needed. So developers can plug `mlxs_lm()`, or the underlying fit function,
+into more complex chains of output.
+
+Caveats: all of this is very early work. Also, a lot of it was vibe-coded. 
+(I know,I know.... I'm sure a real programmer could do much better. If you want
+to help, you're welcome. The source code is not yet an impenetrable pile of
+AI slop. By the way, I wrote this article myself, and here is a short dash - to
+prove it.)
+
+# Conclusion
+
+There are many things to do to keep R moving forward for the 21st century. 
+Lots of [great](https://r-universe.dev) [people](XXX Paul M) are working on
+them. One of them is using modern computer hardware. I hope Rmlx encourages 
+others to tackle this problem.
+
+
+
+
