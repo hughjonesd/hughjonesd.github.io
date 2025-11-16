@@ -2,7 +2,7 @@
 title: "Why I wrote Rmlx"
 author: "David Hugh-Jones"
 date: "2025-11-15"
-output: html_document
+output: tufte::tufte_html
 ---
 
 ```{r setup, include=FALSE}
@@ -37,6 +37,8 @@ However, I do worry that R may stagnate. (Controversial take:
 increasing interest in R from the pharmaceutical industry, which uses
 **RTF** as a standardized file format, is not necessarily a good sign here.) 
 
+# Big data on your MacBook
+
 One thing I think we should aim for is coping better with big data. Nowadays,
 even researchers without a big infrastructure should be able to analyse data
 with millions of rows and many predictors. There's a lot of data around! We
@@ -48,9 +50,12 @@ we have Apple Silicon Macs, with a builtin GPU.
 
 But R can't use the GPU! 
 
-An analogy here: until quite recently, we had multicore laptops but R couldn't
-use the multiple cores. It took packages like "parallel" in base, plus
-the futureverse, to change that.
+An analogy: until a few years ago, we had multicore laptops but R couldn't
+use the multiple cores because R was single-threaded. 
+It took packages like "parallel" in base R, or the
+[futureverse](https://www.futureverse.org/), to change that.
+
+# Introducing Rmlx
 
 Helpfully, Apple has released the [MLX framework](https://mlx-framework.org)
 for working with Apple GPUs. It also has a CUDA backend, so Linux fans are
@@ -121,9 +126,9 @@ prove it.)
 # Conclusion
 
 There are many things to do to keep R moving forward for the 21st century. 
-Lots of [great](https://r-universe.dev) [people](XXX Paul M) are working on
-them. One of them is using modern computer hardware. I hope Rmlx encourages 
-others to tackle this problem.
+[Lots](https://www.tidyverse.org) [of](https://blog.r-project.org) [great](https://r-universe.dev) [people](https://www.stat.auckland.ac.nz/~paul/) are working on
+them. One item on the checklist is to take advantage of modern computer
+hardware. Rmlx is one start at tackling this.
 
 
 
