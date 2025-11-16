@@ -34,8 +34,8 @@ Academics, data journalists and data scientists in organizations doing research
 can all turn to R for this.
 
 However, I do worry that R may stagnate. (Controversial take:
-increasing interest in R from the pharmaceutical industry, which uses
-**RTF** as a standardized file format, is not necessarily a good sign here.) 
+increasing interest in R from the pharmaceutical industry, which, ah, uses
+RTF as a standardized file format, is not necessarily a good sign here.) 
 
 # Big data on your MacBook
 
@@ -44,7 +44,7 @@ even researchers without a big infrastructure should be able to analyse data
 with millions of rows and many predictors. There's a lot of data around! We
 should use it!
 
-It seems relevant and useful that many of us work on laptops with a powerful
+It seems relevant that many of us work on laptops with a powerful
 built-in processor ideally set up for basic statistical operations. I.e.
 we have Apple Silicon Macs, with a builtin GPU. 
 
@@ -91,7 +91,7 @@ But what if we want to control for the date of the flight?
    32.253   0.420  33.007 
   ```
   
-That's too slow to iterate on. 
+That's OK to run once, but too slow to iterate on. 
 
 Let's drop in `RmlxStats::mlxs_lm()` as a replacement for `lm()`:
   
@@ -120,7 +120,7 @@ into more complex chains of output.
 Caveats: all of this is very early work. Also, a lot of it was vibe-coded. 
 (I know,I know.... I'm sure a real programmer could do much better. If you want
 to help, you're welcome. The source code is not yet an impenetrable pile of
-AI slop. By the way, I wrote this article myself, and here is a short dash - to
+AI slop. By the way, I wrote this article myself - here is a short dash to
 prove it.)
 
 # Conclusion

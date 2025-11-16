@@ -112,15 +112,15 @@ nothing as simple as</p>
 <p>Academics, data journalists and data scientists in organizations doing research
 can all turn to R for this.</p>
 <p>However, I do worry that R may stagnate. (Controversial take:
-increasing interest in R from the pharmaceutical industry, which uses
-<strong>RTF</strong> as a standardized file format, is not necessarily a good sign here.)</p>
+increasing interest in R from the pharmaceutical industry, which, ah, uses
+RTF as a standardized file format, is not necessarily a good sign here.)</p>
 <div id="big-data-on-your-macbook" class="section level1">
 <h1>Big data on your MacBook</h1>
 <p>One thing I think we should aim for is coping better with big data. Nowadays,
 even researchers without a big infrastructure should be able to analyse data
 with millions of rows and many predictors. There’s a lot of data around! We
 should use it!</p>
-<p>It seems relevant and useful that many of us work on laptops with a powerful
+<p>It seems relevant that many of us work on laptops with a powerful
 built-in processor ideally set up for basic statistical operations. I.e.
 we have Apple Silicon Macs, with a builtin GPU.</p>
 <p>But R can’t use the GPU!</p>
@@ -154,7 +154,7 @@ large <code>nycflights13</code> dataset. A simple regression runs quickly in bas
 <pre class="r"><code>&gt; system.time(summary(lm(arr_delay ~ dep_delay + paste0(day,&quot;/&quot;,month), data = flights)))
    user  system elapsed 
  32.253   0.420  33.007 </code></pre>
-<p>That’s too slow to iterate on.</p>
+<p>That’s OK to run once, but too slow to iterate on.</p>
 <p>Let’s drop in <code>RmlxStats::mlxs_lm()</code> as a replacement for <code>lm()</code>:</p>
 <pre class="r"><code>&gt; library(RmlxStats)
 &gt; system.time(summary(mlxs_lm(arr_delay ~ dep_delay + paste0(day,&quot;/&quot;,month), data = flights)))
@@ -172,7 +172,7 @@ into more complex chains of output.</p>
 <p>Caveats: all of this is very early work. Also, a lot of it was vibe-coded.
 (I know,I know…. I’m sure a real programmer could do much better. If you want
 to help, you’re welcome. The source code is not yet an impenetrable pile of
-AI slop. By the way, I wrote this article myself, and here is a short dash - to
+AI slop. By the way, I wrote this article myself - here is a short dash to
 prove it.)</p>
 </div>
 <div id="conclusion" class="section level1">
