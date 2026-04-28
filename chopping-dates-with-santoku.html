@@ -4,7 +4,7 @@
     <title>Chopping dates and times with santoku</title>
     <meta charset="utf-8" />
     <meta name="author" content="David Hugh-Jones" />
-    <meta name="date" content="2024-06-04" />
+    <meta name="date" content="2026-04-28" />
     <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
@@ -20,7 +20,7 @@ class: center, middle
 }
 &lt;/style&gt;
 
-# Chopping dates with santoku 0.4.0
+# Chopping dates with santoku
 ## David Hugh-Jones
 
 &lt;img src="figures/logo.png" style="width: 250px" /&gt;
@@ -46,12 +46,12 @@ class: inverse, middle
 
 
 
-```r
+``` r
 y2k &lt;- as.Date("2000-01-01") + 0:365
 y2k_sample &lt;- sample(y2k, 60)
-apr_aug_1 &lt;- as.Date(c("2000-04-01", "2000-08-01"))
+brk_dates &lt;- as.Date(c("2000-01-15", "2000-04-01", "2000-08-01"))
 
-chopped &lt;- chop(y2k_sample, apr_aug_1)
+chopped &lt;- chop(y2k_sample, brk_dates)
 ```
 
 &lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-2-1.png" width="90%" style="display: block; margin: auto;" /&gt;
@@ -62,7 +62,7 @@ class: inverse, top
 # You can use the usual `chop` functions.
 
 
-```r
+``` r
 quartile &lt;- chop_quantiles(y2k_sample, c(0.25, 0.75))
 ```
 
@@ -71,17 +71,21 @@ quartile &lt;- chop_quantiles(y2k_sample, c(0.25, 0.75))
 ---
 class: inverse
 
-# Nice labels are important.
+# `lbl_date()` produces nice labels.
 
 
-```r
-# like table(chop(...)):
-tab(y2k_sample, apr_aug_1, labels = lbl_discrete(fmt = "%b"))
+``` r
+x &lt;- chop(y2k_sample, brk_dates, labels = lbl_date())
+
+table(x)
 ```
 
 ```
-## Jan—Mar Apr—Jul Aug—Dec 
-##      20      20      20
+## x
+##       12-14 Jan 2000 15 Jan - 31 Mar 2000  1 Apr - 31 Jul 2000 
+##                    1                   16                   24 
+##  1 Aug - 22 Dec 2000 
+##                   19
 ```
 
 
@@ -95,7 +99,7 @@ class: inverse
 --
 
   
-  ```r
+  ``` r
   x &lt;- chop_width(y2k, months(1), labels = lbl_endpoints(fmt = "%b"))
          
   table(x)
@@ -132,7 +136,7 @@ class: inverse, middle
 
 
 
-```r
+``` r
 crew_dragon &lt;- as.POSIXct(c(
                     liftoff = "2020-05-30 15:22", 
                     dock    = "2020-05-31 10:16"), 
@@ -149,6 +153,28 @@ stage &lt;- chop(uk_times, crew_dragon,
 &lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-8-1.png" width="90%" style="display: block; margin: auto;" /&gt;
 
 ---
+class: inverse
+
+# `lbl_datetime()` labels datetimes.
+
+  
+  ``` r
+  x &lt;- chop_width(uk_times, hours(4), 
+                  labels = lbl_datetime(fmt = "%H:%M %b %d"))
+  table(x)
+  ```
+  
+  ```
+  ## x
+  ##          18:00-22:00 May 30 22:00 May 30 - 02:00 May 31 
+  ##                           4                           4 
+  ##          02:00-06:00 May 31          06:00-10:00 May 31 
+  ##                           4                           4 
+  ##          10:00-14:00 May 31          14:00-18:00 May 31 
+  ##                           4                           4
+  ```
+---
+
 class: middle center
 
 # Happy chopping!
@@ -162,9 +188,9 @@ class: middle center
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="libs/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
-"highlightStyle": "tomorrow-night",
-"highlightLines": true,
-"countIncrementalSlides": false
+  "highlightStyle": "tomorrow-night",
+  "highlightLines": true,
+  "countIncrementalSlides": false
 });
 if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
   window.dispatchEvent(new Event('resize'));
