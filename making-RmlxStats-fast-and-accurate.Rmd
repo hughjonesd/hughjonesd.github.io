@@ -1,0 +1,280 @@
+---
+title: "Making RmlxStats fast and accurate"
+author: "David Hugh-Jones"
+date: "2026-05-20"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+[mlx](https://mlx-framework.org) is a python/C/C++ API for GPUs on modern Macs.
+[Rmlx](https://hughjonesd.github.io/Rmlx) is an R interface to mlx. The core
+idea behind Rmlx is simple: statistics uses a lot of matrix operations, the GPU
+can do matrix operations fast, so we should let R have access to the GPU.
+
+[RmlxStats](https://hughjonesd.github.io/RmlxStats) is a showcase for
+Rmlx: it rewrites some well-known R model fitting functions using mlx as a
+backend. These include `mlxs_lm()`, `mlxs_glm()`, `mlxs_prcomp()` for
+principal components analysis, and `mlxs_glmnet()` which is inspired by
+`glmnet()` from the glmnet package. The aim of RmlxStats is to learn what Rmlx
+can do, and to provide fast versions of basic statistics.
+
+mlx has some nice advantages: in particular, you can switch between GPU and CPU
+operations without moving data around, which is helpful for many statistics operations. Still, it isn't a perfect solution. Not all operations work on the
+GPU yet: `solve()` is CPU-only which means that `mlxs_lm()` is still slower 
+than its base R cousin.
+
+On the other hand, `mlxs_glm()` is pretty nippy:
+
+```r
+# on my machine
+x <- as.data.frame(matrix(rnorm(5e5*100), 5e5))
+x$y <- rnorm(5e5) + as.matrix(x) %*% rep(1/100, 100)
+x$y_lgl <- x$y > 0
+fml <- reformulate(names(x)[1:100], response = "y_lgl")
+
+system.time(glm(fml, data = x, family = "binomial"))
+##   user  system elapsed 
+## 12.872   0.928  14.183 
+
+system.time({fit <- mlxs_glm(fml, data = x, family = "binomial"); Rmlx::mlx_eval(fit$coefficients)})
+##   user  system elapsed 
+## 11.536   0.819   8.023 
+```
+ 
+ That snippet shows off another feature of mlx: evaluation is lazy, so
+ work isn't done until you evaluate the final result.
+ 
+ # Fast but imprecise
+ 
+ Here's a subtler problem: GPUs work in 32 bits. mlx has support for float64
+ data types, but you can only do operations on the CPU with them. So, to work
+ on the GPU, we are in float32 land. That limits the precision of our results:
+ 
+```{r}
+library(RmlxStats)
+base_fit <- lm(mpg ~ gear, mtcars)
+mlxs_fit <- mlxs_lm(mpg ~ gear, mtcars)
+max(abs(coef(mlxs_fit) - coef(base_fit)))
+```
+ 
+ Does that matter? After all, differences at the 6th decimal place will often
+ be drowned out by sampling error.
+ 
+```{r}
+
+
+params <- expand.grid(n = 10^(5:7), r_sq = c(0.5, 0.9, 0.99))
+
+results <- params |> 
+  split(seq_len(nrow(params))) |> 
+  lapply(function (param) {
+    n <- param$n
+    r_sq <- param$r_sq
+    x <- rnorm(n)
+    a <- sqrt((1 - r_sq)/r_sq)
+    y <- x + a * rnorm(n)
+    base_fit <- lm(y ~ x)
+    mlxs_fit <- mlxs_lm(y ~ x)
+    coef_diff <- max(abs(coef(base_fit) - coef(mlxs_fit)))
+    se <- coef(summary(base_fit))["x", "Std. Error"]
+    data.frame(n, r_sq, coef_diff, se)
+  })
+
+results <- do.call(rbind, results)
+
+results$n <- factor(results$n)
+results$`R squared` <- factor(results$r_sq)
+
+library(ggplot2)
+
+ggplot(results, 
+       aes(coef_diff, se, colour = n, shape = `R squared`, group = n)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_function(fun = \(x) 100*x, linetype="dotted", colour = "black") + 
+  scale_x_log10() + 
+  scale_y_log10() +
+  theme_minimal() +
+  labs(
+    title = "Computational error versus sampling error for mlxs_lm()",
+    subtitle = "Dotted line marks where computational error is 1% of a s.e.",
+    x = "Computational difference",
+    y = "Standard error"
+  )
+```
+ 
+ The graph above plots sampling standard errors against computational
+ differences between `stats::lm()` and `RmlxStats::mlxs_lm()`. Until your N
+ is 10 million and your R-squared is high, sampling error dominates by far.
+ 
+ Fine, but on the other hand...
+ 
+ * If we are treating the coefficient of y on x as a descriptive statistic, 
+   then sampling error is irrelevant.
+ * Big data is RmlxStats' target market! For small datasets, base R will be
+   fast enough. So we should be concerned about the 10-million-row case.
+  
+# High precision finish
+
+Since recent updates, Rmlx supports float64 types. So, one possibility is
+to do early work in float32 on the GPU, then finish in float64 on the CPU. 
+This might give us speed *and* precision.
+
+A natural place to try this was `mlxs_glm()`. General linear models
+use iterations of least squares to find their solution, so we can iterate
+on the GPU, then the CPU after we hit a tolerance threshold.
+
+Rmlx and RmlxStats are both vibe-coded. The process has taught me about
+the benefits and dangers of AI coding: the AI is a competent programmer
+and extremely knowledgeable about statistics, but it will also regularly
+do things that are profoundly silly, and it is quite good at hiding them.
+(For example, earlier versions of Rmlx were silently ignoring the user's
+choice of device.) This is particularly risky when mistakes can
+lead not to an error message, but to a silently wrong statistical result!
+So, before working on the code itself, I wanted to build a test harness.
+
+I coded a series of fuzz tests, working with the AI. Its specialist knowledge
+helped me do better than I could have done on my own: I would have probably
+just used large datasets of random numbers, whereas it knew to focus in
+on "problematic" or interesting sets of variables. It also pointed me to the
+[NIST statistical datasets](https://www.nist.gov/itl/sed/products-services/statistical-reference-data-sets-strd), 
+which are useful small test cases where correct answers have been calculated 
+by hand.
+
+One problem with statistical fuzz tests is knowing what the right answer is!
+Mostly, I took the approach of trusting the base R implementation (or
+`glmnet::glmnet()`) and taking differences from it as errors. But in some
+cases we can do better - for example, by calculating performance on a
+defined objective function, or testing model prediction accuracy against
+an "oracle" based on the true data generating process.
+
+Once I was happy with the fuzz tests, I stored results in a csv file
+populated by a GitHub action. This lets me check how results improve
+over time or with new pull requests. There's an 
+[Rmarkdown vignette](https://hughjonesd.github.io/RmlxStats/articles/fuzz-test-results.html)
+to show the results - it's a little crude right now, but helpful to show
+when something gets better.
+
+We then turned to `mlxs_glm()`. We added an `epsilon_f64` 
+[control variable](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.html) which lets the user tune when to move to float64 on the GPU.
+
+Does it work? Here I plot speed against accuracy for different values of
+`epsilon` and `epsilon_f64`.
+
+```{r}
+library(RmlxStats)
+set.seed(123L)
+
+n <- 1e5
+x <- matrix(rnorm(n * 10 ), n)
+y <- rnorm(n) + x %*% rep(0.1, 10)
+x <- as.data.frame(x)
+x$y <- y
+x$y_lgl <- x$y > 0
+fml <- reformulate(colnames(x)[1:10], response = "y_lgl")
+
+base_fit <- glm(fml, data = x, family = "binomial")
+base_coefs <- coef(base_fit)
+
+eps <- 10^-(6:12)
+eps_f64 <- 10^-(5:7)
+params <- expand.grid(eps = eps, eps_f64 = eps_f64)
+params <- params[params$eps < params$eps_f64,]
+
+results <- params |> 
+  split(seq_len(nrow(params))) |> 
+  lapply(function (param) {
+    nreps <- 10
+    time <- system.time({
+      for (rep in 1:nreps) {
+        fit <- mlxs_glm(fml, data = x, family = "binomial",
+                        control = list(epsilon_f64 = param$eps_f64, 
+                                       epsilon = param$eps))
+        coefs <- coef(fit)
+      }
+    })
+    elapsed <- time[["elapsed"]]/nreps
+    coef_diff <- max(abs(coefs - base_coefs))
+    data.frame(epsilon = param$eps, epsilon_f64 = param$eps_f64,
+               elapsed = elapsed, coef_diff = coef_diff)
+  })
+
+results <- do.call(rbind, results)
+```
+
+```{r}
+library(forcats)
+
+results |> 
+  transform(epsilon_f64 = factor(epsilon_f64), epsilon = factor(epsilon)) |> 
+  transform(epsilon = fct_rev(epsilon)) |> 
+  ggplot(aes(epsilon, coef_diff, 
+             size = elapsed, colour = epsilon_f64)) + 
+    geom_point() + 
+    scale_color_viridis_d(end = 0.9, option = "A") +
+    scale_y_log10() +
+    theme_minimal() + 
+    labs(
+      title = "Coefficient error in mlxs_glm()",
+      y = "Coefficient error",
+      size = "Time elapsed"
+    )
+```
+
+ There's a clear jump in accuracy at 
+`epsilon = 1e-7`, but this only happens when `epsilon_f64` is low
+enough. Otherwise, conversion to float64 never kicks in because we simply
+never hit the threshold. We never get closer than 3e-9 to the base result,
+even at very low epsilons. This may simply be due to the different algorithms 
+being used.
+
+You can also see that time hasn't taken too huge a hit from increasing the
+accuracy. The next graph shows this in more detail:
+
+```{r}
+library(santoku)
+
+results |> 
+  transform(
+    epsilon_f64 = factor(epsilon_f64), 
+    epsilon = factor(epsilon),
+    Error = santoku::chop(coef_diff, 10^-(9:5), 
+                             labels = lbl_glue(label = "< {r}"))) |> 
+  transform(epsilon = fct_rev(epsilon)) |> 
+  ggplot(aes(epsilon, elapsed, colour = epsilon_f64, group = epsilon_f64)) + 
+    geom_line() + 
+    geom_point(aes(shape = Error), fill = "white") + 
+    scale_y_log10() + 
+    scale_shape_manual(values = c("< 1e-08" = "circle", 
+                                  "< 1e-06" = "circle filled")) +  
+    
+    theme_minimal() + 
+    labs(
+      title = "Speed in mlxs_glm() with float64 operations",
+      y = "Time elapsed (log scale)"
+    )
+
+```
+
+Moving to float64 too early slows you, though not by much; moving to it 
+never (1e-7) is faster, but your results stay at float32 levels of accuracy.
+The sweet spot is `epsilon_f64 = 1e-6`, and that is the current default. 
+
+# Failures
+
+I was encouraged by this, and tried similar tricks for `mlxs_lm()` and the
+other package functions. None of these really worked; either
+the limits on accuracy were not just down to the GPU, or my approach was wrong.
+So for now, most of RmlxStats remains in float32. 
+
+Still, the testing infrastructure I've set up should help check any future
+work, and progress in the mlx framework should open up new speedups. I've also
+got more comfortable working with llms. It's about finding the balance 
+between speed and accuracy - kind of like the statistics, in fact.
+
+
