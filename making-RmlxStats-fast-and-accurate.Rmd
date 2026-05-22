@@ -9,6 +9,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(mypaintr)
 ```
 
 [mlx](https://mlx-framework.org) is a python/C/C++ API for GPUs on modern Macs.
@@ -24,27 +25,28 @@ principal components analysis, and `mlxs_glmnet()` which is inspired by
 can do, and to provide fast versions of basic statistics.
 
 mlx has some nice advantages: in particular, you can switch between GPU and CPU
-operations without moving data around, which is helpful for many statistics operations. Still, it isn't a perfect solution. Not all operations work on the
-GPU yet: `solve()` is CPU-only which means that `mlxs_lm()` is still slower 
-than its base R cousin.
+operations without moving data around, which is helpful for many statistics 
+operations. Still, it isn't a perfect solution. Not all operations work on the
+GPU yet: `solve()` is CPU-only.
 
-On the other hand, `mlxs_glm()` is pretty nippy:
+Despite this, mlx can be pretty fast:
 
-```r
-# on my machine
-x <- as.data.frame(matrix(rnorm(5e5*100), 5e5))
-x$y <- rnorm(5e5) + as.matrix(x) %*% rep(1/100, 100)
-x$y_lgl <- x$y > 0
-fml <- reformulate(names(x)[1:100], response = "y_lgl")
 
-system.time(glm(fml, data = x, family = "binomial"))
-##   user  system elapsed 
-## 12.872   0.928  14.183 
+  ```r
+  # On my machine
+  > system.time(lm(arr_delay ~ dep_delay + factor(paste(month,day)), 
+                   data = nycflights13::flights))
+     user  system elapsed 
+   31.769   0.544  32.764 
 
-system.time({fit <- mlxs_glm(fml, data = x, family = "binomial"); Rmlx::mlx_eval(fit$coefficients)})
-##   user  system elapsed 
-## 11.536   0.819   8.023 
-```
+  > system.time({
+      fit <- mlxs_lm(arr_delay ~ dep_delay + factor(paste(month,day)), 
+                     data = nycflights13::flights)
+      Rmlx::mlx_eval(fit$coefficients)
+    })
+     user  system elapsed 
+    4.274   0.739   3.351 
+  ```
  
  That snippet shows off another feature of mlx: evaluation is lazy, so
  work isn't done until you evaluate the final result.
@@ -93,10 +95,10 @@ results$`R squared` <- factor(results$r_sq)
 library(ggplot2)
 
 ggplot(results, 
-       aes(coef_diff, se, colour = n, shape = `R squared`, group = n)) + 
-  geom_point() + 
+       aes(coef_diff, se, colour = n, group = n)) + 
+  geom_point(aes(shape = `R squared`)) + 
   geom_line() + 
-  geom_function(fun = \(x) 100*x, linetype="dotted", colour = "black") + 
+  geom_function(aes(group = 1), fun = \(x) 100*x, linetype="dotted", colour = "black") + 
   scale_x_log10() + 
   scale_y_log10() +
   theme_minimal() +
@@ -109,7 +111,8 @@ ggplot(results,
 ```
  
  The graph above plots sampling standard errors against computational
- differences between `stats::lm()` and `RmlxStats::mlxs_lm()`. Until your N
+ differences between `stats::lm()` and `RmlxStats::mlxs_lm()`. (I'm take
+ `stats::lm()` as ground truth.) Until your N
  is 10 million and your R-squared is high, sampling error dominates by far.
  
  Fine, but on the other hand...
@@ -263,7 +266,30 @@ results |>
 
 Moving to float64 too early slows you, though not by much; moving to it 
 never (1e-7) is faster, but your results stay at float32 levels of accuracy.
-The sweet spot is `epsilon_f64 = 1e-6`, and that is the current default. 
+The sweet spot is `epsilon_f64 = 1e-6`, and that is the current default. (These
+are quite rough measurements for a blog post - the [benchmark](https://hughjonesd.github.io/RmlxStats/articles/fuzz-test-results.html)and 
+[fuzz test](https://hughjonesd.github.io/RmlxStats/articles/benchmarks.html) 
+vignettes have more details.)
+
+# What could go wrong?
+
+It's worth sharing a vibe-coding gone wrong anecdote. At some point, Codex asked me
+if we should check for rank-deficiency in linear fits. I thought about it and said
+yes, and it implemented a function `.mlxs_check_full_rank(x, ...)`, which I accepted 
+without checking too hard.
+
+Oops. The function *recomputed the QR decomposition for the design matrix `x`*, meaning we 
+were now doing the most computationally expensive part of linear regression, twice.
+I didn't notice the slowdown in all my benchmarks until later, and an earlier version
+of this article said "`mlxs_lm()` is still slower than `stats::lm()`". No it's not!
+
+Fortunately, Codex also saved me when I asked it to find the source of the slowdown.
+It bisected commits and found the problem, leading me to fix it, and then to ask:
+
+> You have genius-level statistical and computing knowledge. 
+> Is there some instruction you could be given, that would stop you doing 
+> *very stupid things*?
+
 
 # Failures
 
