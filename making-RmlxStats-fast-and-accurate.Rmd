@@ -2,14 +2,15 @@
 title: "Making RmlxStats fast and accurate"
 author: "David Hugh-Jones"
 date: "2026-05-20"
-output: html_document
+output: 
+  html_document:
+    theme: journal
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(mypaintr)
 ```
 
 [mlx](https://mlx-framework.org) is a python/C/C++ API for GPUs on modern Macs.
@@ -47,8 +48,20 @@ Despite this, mlx can be pretty fast:
      user  system elapsed 
     4.274   0.739   3.351 
   ```
+
+Or even, very fast:
+
+  ```r
+  > mat <- matrix(rnorm(1e7), 1e4)
+  > system.time({pr <- prcomp(mat); summary(mat)})
+     user  system elapsed 
+   26.785   0.151  26.943 
+  > system.time({pr <- mlxs_prcomp(mat); summary(mat)})
+     user  system elapsed 
+    0.437   0.063   0.548 
+  ```
  
-That snippet shows off another feature of mlx: evaluation is lazy, so
+Those snippets show off another feature of mlx: evaluation is lazy, so
 work isn't done until you evaluate the final result.
  
 # Fast but imprecise
@@ -192,7 +205,7 @@ params <- params[params$eps < params$eps_f64,]
 results <- params |> 
   split(seq_len(nrow(params))) |> 
   lapply(function (param) {
-    nreps <- 10
+    nreps <- 25
     time <- system.time({
       for (rep in 1:nreps) {
         fit <- mlxs_glm(fml, data = x, family = "binomial",
