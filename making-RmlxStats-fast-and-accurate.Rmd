@@ -48,14 +48,14 @@ Despite this, mlx can be pretty fast:
     4.274   0.739   3.351 
   ```
  
- That snippet shows off another feature of mlx: evaluation is lazy, so
- work isn't done until you evaluate the final result.
+That snippet shows off another feature of mlx: evaluation is lazy, so
+work isn't done until you evaluate the final result.
  
- # Fast but imprecise
+# Fast but imprecise
  
- Here's a subtler problem: GPUs work in 32 bits. mlx has support for float64
- data types, but you can only do operations on the CPU with them. So, to work
- on the GPU, we are in float32 land. That limits the precision of our results:
+Here's a subtler problem: GPUs work in 32 bits. mlx has support for float64
+data types, but you can only do operations on the CPU with them. So, to work
+on the GPU, we are in float32 land. That limits the precision of our results:
  
 ```{r}
 library(RmlxStats)
@@ -64,8 +64,8 @@ mlxs_fit <- mlxs_lm(mpg ~ gear, mtcars)
 max(abs(coef(mlxs_fit) - coef(base_fit)))
 ```
  
- Does that matter? After all, differences at the 6th decimal place will often
- be drowned out by sampling error.
+Does that matter? After all, differences at the 6th decimal place will often
+be drowned out by sampling error.
  
 ```{r}
 
@@ -111,7 +111,7 @@ ggplot(results,
 ```
  
  The graph above plots sampling standard errors against computational
- differences between `stats::lm()` and `RmlxStats::mlxs_lm()`. (I'm take
+ differences between `stats::lm()` and `RmlxStats::mlxs_lm()`. (I'm taking
  `stats::lm()` as ground truth.) Until your N
  is 10 million and your R-squared is high, sampling error dominates by far.
  
