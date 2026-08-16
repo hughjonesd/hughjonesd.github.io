@@ -4,7 +4,7 @@
     <title>Chopping dates and times with santoku</title>
     <meta charset="utf-8" />
     <meta name="author" content="David Hugh-Jones" />
-    <meta name="date" content="2026-04-28" />
+    <meta name="date" content="2026-08-16" />
     <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
@@ -54,7 +54,7 @@ brk_dates &lt;- as.Date(c("2000-01-15", "2000-04-01", "2000-08-01"))
 chopped &lt;- chop(y2k_sample, brk_dates)
 ```
 
-&lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-2-1.png" width="90%" style="display: block; margin: auto;" /&gt;
+&lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-2-1.png" alt="" width="90%" style="display: block; margin: auto;" /&gt;
 
 ---
 class: inverse, top
@@ -66,7 +66,7 @@ class: inverse, top
 quartile &lt;- chop_quantiles(y2k_sample, c(0.25, 0.75))
 ```
 
-&lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-4-1.png" width="90%" style="display: block; margin: auto;" /&gt;
+&lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-4-1.png" alt="" width="90%" style="display: block; margin: auto;" /&gt;
 
 ---
 class: inverse
@@ -82,10 +82,10 @@ table(x)
 
 ```
 ## x
-##       12-14 Jan 2000 15 Jan - 31 Mar 2000  1 Apr - 31 Jul 2000 
-##                    1                   16                   24 
-##  1 Aug - 22 Dec 2000 
-##                   19
+##        7-14 Jan 2000 15 Jan - 31 Mar 2000  1 Apr - 31 Jul 2000 
+##                    1                   14                   22 
+##  1 Aug - 25 Dec 2000 
+##                   23
 ```
 
 
@@ -150,7 +150,7 @@ stage &lt;- chop(uk_times, crew_dragon,
 ```
 
 
-&lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-8-1.png" width="90%" style="display: block; margin: auto;" /&gt;
+&lt;img src="chopping-dates-with-santoku_files/figure-html/unnamed-chunk-8-1.png" alt="" width="90%" style="display: block; margin: auto;" /&gt;
 
 ---
 class: inverse
@@ -183,7 +183,7 @@ class: middle center
 
 [CRAN](https://cran.r-project.org/package=santoku)
 
-[github](https://hughjonesd.github.io/santoku)
+[GitHub](https://hughjonesd.github.io/santoku)
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="libs/remark-latest.min.js"></script>

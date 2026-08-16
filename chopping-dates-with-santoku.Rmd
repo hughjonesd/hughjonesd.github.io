@@ -205,4 +205,4 @@ class: middle center
 
 [CRAN](https://cran.r-project.org/package=santoku)
 
-[github](https://hughjonesd.github.io/santoku)
+[GitHub](https://hughjonesd.github.io/santoku)
